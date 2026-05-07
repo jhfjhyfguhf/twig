@@ -92,43 +92,36 @@
             transform: translateY(-50%);
             opacity: 0.4;
         }
-
-        .liked { color: #ef4444 !important; }
-        .retweeted { color: #10b981 !important; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
     </style>
 </head>
 <body>
 
-    <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center transition-all duration-500">
+    <!-- واجهة تسجيل الدخول المحدثة لدعم Gmail و SMTP -->
+    <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
         <div class="mb-10 text-white">
             <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6">
                 <i class="fas fa-mountain text-[#006C48] text-4xl"></i>
             </div>
             <h1 class="text-3xl font-black mb-2">منصة طويق</h1>
-            <p class="text-white/70 font-medium italic">همة تعانق السماء 🇸🇦</p>
+            <p class="text-white/70 font-medium italic">سجل دخولك عبر Gmail 🇸🇦</p>
         </div>
         
         <div class="w-full max-w-xs space-y-4">
-            <input type="email" id="login-email" placeholder="بريدك الإلكتروني (Gmail)" 
+            <input type="email" id="login-email" placeholder="أدخل بريدك الإلكتروني" 
                 class="w-full p-4 rounded-2xl text-center text-gray-900 font-bold outline-none border-2 border-transparent focus:border-[#D4AF37] transition-all shadow-lg">
             
             <button onclick="handleGmailLogin()" id="btn-login-action" class="w-full bg-white text-[#006C48] font-black py-4 px-6 rounded-2xl shadow-xl hover:scale-105 transition-transform active:scale-95 flex items-center justify-center gap-3">
                 <i class="fas fa-envelope"></i>
                 أرسل رابط الدخول
             </button>
-            <p id="login-status" class="text-white/50 text-[10px]">سيصلك رابط تسجيل دخول آمن على بريدك</p>
+            <p id="status-msg" class="text-white/50 text-[10px]">ستصلك رسالة تحتوي على رابط الدخول الفوري</p>
         </div>
     </div>
 
+    <!-- واجهة إكمال الملف الشخصي -->
     <div id="view-setup" class="fixed inset-0 z-[998] bg-white flex flex-col p-8 hidden overflow-y-auto text-gray-900">
         <h2 class="text-2xl font-black mb-2">إكمال ملفك الشخصي</h2>
-        <p class="text-gray-400 text-sm mb-8">لنتمكن من تخصيص تجربتك في طويق</p>
+        <p class="text-gray-400 text-sm mb-8">أهلاً بك في طويق، لنكمل بياناتك لمرة واحدة</p>
         <div class="space-y-6">
             <div class="flex justify-center mb-6">
                 <div class="relative">
@@ -141,18 +134,17 @@
             </div>
             <div>
                 <label class="text-xs font-black opacity-40 block mb-2 mr-1">اسم المستخدم (English Only)</label>
-                <div class="relative">
-                    <input type="text" id="setup-username" placeholder="e.g. tuwaiq_hero" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900">
-                </div>
+                <input type="text" id="setup-username" placeholder="مثال: saudi_hero" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900">
             </div>
             <div>
                 <label class="text-xs font-black opacity-40 block mb-2 mr-1">العمر</label>
                 <input type="number" id="setup-age" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900">
             </div>
-            <button onclick="completeProfile()" id="btn-save-profile" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg mt-4">حفظ ودخول المنصة</button>
+            <button onclick="completeProfile()" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg mt-4">حفظ والانطلاق 🚀</button>
         </div>
     </div>
 
+    <!-- التطبيق الرئيسي -->
     <div id="app" class="app-container hidden">
         <header class="shrink-0 bg-inherit/80 backdrop-blur-md border-b border-gray-500/5 px-6 py-4 flex justify-between items-center z-50">
             <div class="flex items-center gap-3">
@@ -176,52 +168,34 @@
                     </div>
                 </div>
 
-                <div class="p-4 border-b border-gray-500/5 bg-inherit">
+                <div class="p-4 border-b border-gray-500/5">
                     <div class="flex gap-4">
-                        <img id="user-avatar-mini" src="" class="w-11 h-11 rounded-2xl bg-gray-100 shadow-sm object-cover cursor-pointer" onclick="switchTab('profile')">
+                        <img id="user-avatar-mini" src="" class="w-11 h-11 rounded-2xl bg-gray-100 object-cover">
                         <div class="flex-1">
-                            <textarea id="post-input" placeholder="ما هي همتك اليوم؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium min-h-[60px] pt-2" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
-                            <div class="flex justify-between items-center mt-2 border-t border-gray-500/5 pt-3">
-                                <div class="flex gap-4 text-[#006C48] text-xl">
-                                    <label class="cursor-pointer hover:bg-gray-100 p-2 rounded-full transition">
-                                        <i class="far fa-image"></i>
-                                        <input type="file" id="post-image-upload" class="hidden" accept="image/*">
-                                    </label>
-                                    <button class="hover:bg-gray-100 p-2 rounded-full transition"><i class="far fa-smile"></i></button>
-                                </div>
+                            <textarea id="post-input" placeholder="ما هي همتك اليوم؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium min-h-[60px] pt-2"></textarea>
+                            <div class="flex justify-end mt-2">
                                 <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-2 rounded-full font-black shadow-lg">نشر</button>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <div id="main-feed" class="divide-y divide-gray-500/5 scroll-spacer"></div>
             </section>
 
-            <section id="view-profile" class="view-content hidden scroll-spacer">
-                <div class="h-44 bg-[#006C48] relative">
-                    <img src="https://images.unsplash.com/photo-1548013146-72479768b921?auto=format&fit=crop&w=800" class="w-full h-full object-cover opacity-30">
-                </div>
-                <div class="px-6 -mt-14 relative">
-                    <img id="profile-avatar-large" src="" class="w-28 h-28 rounded-[2.5rem] bg-white border-4 border-[#006C48] shadow-2xl object-cover">
-                    <div class="mt-4">
-                        <h2 id="profile-name" class="text-2xl font-black">--</h2>
-                        <p id="profile-handle" class="text-[#D4AF37] font-bold text-sm">@--</p>
-                    </div>
-                    <div id="profile-actions-box" class="mt-4">
-                        <button onclick="handleLogout()" class="w-full bg-red-500/10 text-red-500 font-black py-3 rounded-2xl text-sm">تسجيل الخروج</button>
-                    </div>
-                </div>
-                <div id="user-posts-feed" class="mt-6 divide-y divide-gray-500/5"></div>
+            <section id="view-profile" class="view-content hidden scroll-spacer p-6 text-center">
+                <img id="profile-avatar-large" src="" class="w-24 h-24 rounded-full mx-auto border-4 border-[#006C48] mb-4">
+                <h2 id="profile-name" class="text-xl font-black"></h2>
+                <p id="profile-handle" class="text-[#D4AF37] mb-6"></p>
+                <button onclick="handleLogout()" class="bg-red-500 text-white px-6 py-2 rounded-xl font-bold">تسجيل الخروج</button>
             </section>
         </main>
 
-        <nav class="shrink-0 bg-inherit/90 backdrop-blur-xl border-t border-gray-500/10 flex justify-around items-center h-20 z-[100] px-2">
-            <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1.5 flex-1 transition-all">
+        <nav class="shrink-0 bg-inherit border-t border-gray-500/10 flex justify-around items-center h-20 z-[100]">
+            <button onclick="switchTab('home')" class="flex flex-col items-center gap-1 flex-1 nav-active" id="nav-home">
                 <i class="fas fa-house-chimney text-xl"></i>
                 <span class="text-[9px] font-black">الرئيسية</span>
             </button>
-            <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
+            <button onclick="switchTab('profile')" class="flex flex-col items-center gap-1 flex-1 text-gray-400" id="nav-profile">
                 <i class="fas fa-user-astronaut text-xl"></i>
                 <span class="text-[9px] font-black">ملفي</span>
             </button>
@@ -236,13 +210,13 @@
         const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let userSession = null;
-        let allPosts = []; 
+        let allPosts = [];
 
         window.onload = () => initApp();
 
         async function initApp() {
-            // 1. Check if we have an active session (Handles Magic Link return)
-            const { data: { session }, error } = await _supabase.auth.getSession();
+            // التحقق من وجود جلسة
+            const { data: { session } } = await _supabase.auth.getSession();
             
             if (session) {
                 const localUser = localStorage.getItem('tuwaiq_user');
@@ -250,7 +224,7 @@
                     userSession = JSON.parse(localUser);
                     showMainApp();
                 } else {
-                    // Authenticated via email but profile is not setup yet
+                    // إذا مسجل دخول لكن لم يكمل الملف
                     userSession = { 
                         id: session.user.id, 
                         email: session.user.email, 
@@ -263,11 +237,13 @@
                 document.getElementById('view-login').classList.remove('hidden');
             }
 
+            // مراقبة تغيير الحالة عند العودة من الإيميل
             _supabase.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' && session) {
-                    console.log("Welcome! Logged in via email.");
-                    // After clicking link, the browser might need a refresh to sync everything
-                    if (!userSession) window.location.reload();
+                    if (!localStorage.getItem('tuwaiq_user')) {
+                        // إعادة تحميل لضمان الانتقال لواجهة الإكمال
+                        location.reload(); 
+                    }
                 }
             });
         }
@@ -275,7 +251,6 @@
         async function handleGmailLogin() {
             const email = document.getElementById('login-email').value.trim();
             const btn = document.getElementById('btn-login-action');
-            const statusText = document.getElementById('login-status');
 
             if (!email || !email.includes('@')) return showToast("يرجى إدخال بريد إلكتروني صحيح 📧");
 
@@ -290,14 +265,17 @@
             });
 
             if (error) {
-                showToast("خطأ: " + error.message);
+                if (error.message.includes("rate limit")) {
+                    showToast("❌ وصلت للحد الأقصى! يرجى الانتظار ساعة أو تفعيل SMTP.");
+                } else {
+                    showToast("خطأ: " + error.message);
+                }
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-envelope"></i> أرسل رابط الدخول';
             } else {
-                showToast("تم إرسال الرابط بنجاح! تفقد بريدك الإلكتروني 📥");
+                showToast("تم إرسال رابط الدخول لبريدك بنجاح! 📥");
                 btn.innerHTML = "تفقد بريدك الآن ✅";
-                statusText.innerHTML = "أرسلنا رابطاً خاصاً إلى " + email + ". اضغط عليه لتسجيل الدخول فوراً.";
-                statusText.classList.add('text-white', 'opacity-100');
+                document.getElementById('status-msg').innerText = "تم الإرسال لـ " + email;
             }
         }
 
@@ -307,15 +285,15 @@
             const age = document.getElementById('setup-age').value;
 
             if (!name || !username || !age) return showToast("يرجى إكمال جميع الحقول");
-            if (!/^[a-z0-9_]+$/.test(username)) return showToast("اليوزر يجب أن يكون إنجليزي، حروف صغيرة وأرقام فقط");
 
             userSession.full_name = name;
             userSession.username = username;
             userSession.age = age;
 
+            // حفظ البيانات محلياً (يمكنك حفظها في جدول 'profiles' في سوبابيس أيضاً لاحقاً)
             localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
             showMainApp();
-            showToast("مرحباً بك في طويق! 🇸🇦");
+            showToast("مرحباً بك في مجتمع طويق! 🇸🇦");
         }
 
         function showMainApp() {
@@ -323,31 +301,40 @@
             document.getElementById('view-setup').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
             document.getElementById('user-avatar-mini').src = userSession.avatar_url;
-            updateProfileView(userSession);
+            document.getElementById('profile-avatar-large').src = userSession.avatar_url;
+            document.getElementById('profile-name').innerText = userSession.full_name;
+            document.getElementById('profile-handle').innerText = `@${userSession.username}`;
             loadPosts();
         }
 
         async function loadPosts() {
-            const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
-            if (!error) { allPosts = data; renderPosts(data, 'main-feed'); }
+            const { data, error } = await _supabase
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (!error) {
+                allPosts = data;
+                renderPosts(data);
+            }
         }
 
-        function renderPosts(posts, containerId) {
-            const container = document.getElementById(containerId);
-            if (!posts || posts.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center opacity-30 text-xs font-bold italic">لا توجد همم حالياً..</div>`;
+        function renderPosts(posts) {
+            const container = document.getElementById('main-feed');
+            if (!posts.length) {
+                container.innerHTML = `<div class="p-20 text-center opacity-30 text-xs font-bold">لا توجد منشورات حالياً..</div>`;
                 return;
             }
             container.innerHTML = posts.map(post => `
-                <div class="p-5 border-b border-gray-500/5 animate-fade-in">
-                    <div class="flex gap-3 mb-3">
-                        <img src="${post.author_avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tuwaiq'}" class="w-10 h-10 rounded-xl bg-gray-100 object-cover">
+                <div class="p-5 border-b border-gray-500/5">
+                    <div class="flex gap-3 mb-4">
+                        <img src="${post.author_avatar}" class="w-10 h-10 rounded-xl object-cover">
                         <div>
                             <h4 class="font-black text-sm">${post.author_name}</h4>
                             <p class="text-[10px] text-[#006C48] font-bold">@${post.username}</p>
                         </div>
                     </div>
-                    <p class="text-[14px] leading-relaxed">${post.content}</p>
+                    <p class="text-[15px] font-medium">${post.content}</p>
                 </div>
             `).join('');
         }
@@ -356,37 +343,26 @@
             const input = document.getElementById('post-input');
             const content = input.value.trim();
             if (!content) return;
-            const { error } = await _supabase.from('posts').insert([{ 
-                content: content, author_name: userSession.full_name, author_avatar: userSession.avatar_url, username: userSession.username, likes: 0 
+
+            const { error } = await _supabase.from('posts').insert([{
+                content,
+                author_name: userSession.full_name,
+                author_avatar: userSession.avatar_url,
+                username: userSession.username
             }]);
-            if (!error) { input.value = ""; loadPosts(); showToast("تم النشر بنجاح 🇸🇦"); }
+
+            if (!error) {
+                input.value = "";
+                loadPosts();
+                showToast("تم النشر بنجاح 🇸🇦");
+            }
         }
 
         function switchTab(tab) {
             document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
             document.getElementById(`view-${tab}`).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-[#006C48]'));
             document.getElementById(`nav-${tab}`).classList.add('nav-active');
-        }
-
-        function updateProfileView(user) {
-            document.getElementById('profile-avatar-large').src = user.avatar_url;
-            document.getElementById('profile-name').innerText = user.full_name;
-            document.getElementById('profile-handle').innerText = `@${user.username}`;
-        }
-
-        async function handleLogout() {
-            await _supabase.auth.signOut();
-            localStorage.removeItem('tuwaiq_user');
-            window.location.reload();
-        }
-
-        function showToast(msg) {
-            const t = document.createElement('div');
-            t.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-6 py-3 rounded-2xl text-sm font-black shadow-2xl z-[2000] animate-fade-in";
-            t.innerText = msg;
-            document.body.appendChild(t);
-            setTimeout(() => { t.style.opacity = '0'; t.style.transition = '0.5s'; setTimeout(() => t.remove(), 500); }, 2500);
         }
 
         function toggleDarkMode() {
@@ -395,11 +371,23 @@
             icon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
         }
 
-        function handleSearch(query) {
-            const q = query.toLowerCase().trim();
-            if (!q) { renderPosts(allPosts, 'main-feed'); return; }
-            const filtered = allPosts.filter(p => p.content.toLowerCase().includes(q) || p.author_name.toLowerCase().includes(q));
-            renderPosts(filtered, 'main-feed');
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            localStorage.removeItem('tuwaiq_user');
+            location.reload();
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-6 py-3 rounded-2xl text-sm font-black shadow-2xl z-[2000]";
+            t.innerText = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        function handleSearch(val) {
+            const filtered = allPosts.filter(p => p.content.includes(val) || p.author_name.includes(val));
+            renderPosts(filtered);
         }
     </script>
 </body>
