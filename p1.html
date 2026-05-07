@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>طويق | إدارة الحساب</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tuwaiq Premium | طويق</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,443 +11,851 @@
     
     <style>
         :root {
-            --saudi-green: #006C48;
-            --saudi-gold: #D4AF37;
-            --bg-main: #f8faf8;
-            --card-bg: #ffffff;
-            --text-main: #0a0a0a;
+            --primary: #006C48;
+            --primary-soft: #008f5d;
+            --accent: #D4AF37;
+            --bg-light: #f8fafc;
+            --card-light: #ffffff;
+            --text-main: #0f172a;
+            --border-light: rgba(0,0,0,0.04);
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
         }
         
         .dark-mode {
-            --bg-main: #050705;
-            --card-bg: #0f130f;
-            --text-main: #f0f0f0;
+            --bg-light: #080a08;
+            --card-light: #121412;
+            --text-main: #f1f5f9;
+            --border-light: rgba(255,255,255,0.06);
         }
 
         body {
             font-family: 'Tajawal', sans-serif;
-            background-color: #f3f4f6;
+            background-color: var(--bg-light);
             color: var(--text-main);
-            transition: background 0.3s ease;
             margin: 0;
             overflow: hidden;
+            transition: all 0.3s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .app-container {
-            background-color: var(--bg-main);
-            max-width: 500px;
+        .app-shell {
+            max-width: 480px;
             margin: 0 auto;
             height: 100vh;
-            position: relative;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+            position: relative;
+            background: var(--bg-light);
+            box-shadow: 0 0 100px rgba(0,0,0,0.1);
+        }
+
+        .glass-nav {
+            background: rgba(var(--bg-light), 0.7);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-bottom: 1px solid var(--border-light);
+            z-index: 1000;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .nav-active { color: var(--saudi-green) !important; font-weight: 900; transform: scale(1.1); }
-        
-        main {
-            flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+        .post-card {
+            background: transparent;
+            border-bottom: 1px solid var(--border-light);
+            padding: 16px;
+            transition: background 0.2s ease;
+            cursor: pointer;
         }
+        .post-card:active { background: rgba(0,0,0,0.02); }
 
-        .settings-menu {
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 18px;
+            font-weight: 800;
+            box-shadow: 0 10px 25px -5px rgba(0, 108, 72, 0.3);
+            transition: 0.3s;
+        }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide { animation: slideUp 0.5s ease forwards; }
+
+        .sheet {
             position: absolute;
-            top: 65px;
-            left: 20px;
-            width: 220px;
-            background: var(--card-bg);
-            border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            z-index: 100;
-            display: none;
-            overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.08);
-            backdrop-filter: blur(10px);
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-light);
+            border-radius: 35px 35px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 3000;
+            padding: 20px 20px calc(25px + var(--safe-bottom));
         }
-        .settings-menu.show { display: block; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.9) translateY(-10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+        .sheet.open { transform: translateY(0); }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.4s;
+            z-index: 2999;
         }
+        .overlay.active { opacity: 1; visibility: visible; }
 
-        .profile-tab-active {
-            border-bottom: 3px solid var(--saudi-green);
-            color: var(--saudi-green);
-            opacity: 1 !important;
+        .avatar-picker {
+            width: 120px;
+            height: 120px;
+            border-radius: 45px;
+            position: relative;
+            cursor: pointer;
+            border: 4px solid var(--primary);
+            padding: 4px;
         }
-
-        /* Custom File Input */
-        #avatar-input { display: none; }
+        .avatar-picker img { width: 100%; height: 100%; border-radius: 38px; object-fit: cover; }
+        .avatar-badge {
+            position: absolute;
+            bottom: -5px;
+            left: -5px;
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 3px solid var(--card-light);
+        }
     </style>
 </head>
 <body>
 
-    <!-- Login View -->
-    <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
-        <div class="mb-12 text-white animate-pulse">
-            <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6">
-                <i class="fas fa-mountain text-[#006C48] text-4xl"></i>
-            </div>
-            <h1 class="text-3xl font-black mb-2">منصة طويق</h1>
-            <p class="text-white/80 font-medium">همة تعانق السماء 🇸🇦</p>
+    <div id="toast-box" class="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none"></div>
+
+    <!-- Post Detail View (Comments) -->
+    <div id="post-detail-view" class="fixed inset-0 bg-white dark:bg-[#080a08] z-[6000] transform translate-x-full transition-transform duration-300 flex flex-col hidden">
+        <div class="glass-nav flex items-center gap-6 px-4 py-3 sticky top-0">
+            <button onclick="closeComments()" class="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center transition">
+                <i class="fas fa-arrow-right"></i>
+            </button>
+            <h2 class="text-xl font-black">المنشور</h2>
         </div>
-        <button onclick="handleLogin()" class="w-full max-w-xs bg-white text-gray-900 font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-4 shadow-xl hover:brightness-95 transition">
-            <img src="https://www.google.com/favicon.ico" class="w-6 h-6">
-            دخول سريع للمعاينة
-        </button>
+        <div id="main-post-content" class="p-4 border-b border-gray-100 dark:border-white/5"></div>
+        <div class="flex-1 overflow-y-auto no-scrollbar pb-24" id="comments-feed"></div>
+        <div class="fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto bg-white dark:bg-[#080a08] border-t border-gray-100 dark:border-white/5 p-3 flex gap-3 items-center z-[6010]">
+            <img id="comment-avatar" src="" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-white/10">
+            <input type="text" id="comment-input" placeholder="أضف ردك..." class="flex-1 bg-gray-100 dark:bg-white/5 rounded-full px-4 py-2.5 text-sm outline-none focus:ring-1 ring-emerald-500 font-medium">
+            <button onclick="addComment()" class="text-emerald-600 font-black px-3 hover:text-emerald-700 transition">رد</button>
+        </div>
     </div>
 
-    <!-- Profile Edit Modal -->
-    <div id="modal-edit-profile" class="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white dark:bg-[#0f130f] w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] p-8 shadow-2xl transition-all border-t border-white/10">
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="text-2xl font-black">إعدادات الحساب</h3>
-                <button onclick="closeEditModal()" class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center"><i class="fas fa-times"></i></button>
+    <div id="main-overlay" class="overlay" onclick="closeSheet()"></div>
+    <div id="action-sheet" class="sheet shadow-2xl">
+        <div class="w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-8"></div>
+        <div id="sheet-body" class="space-y-3"></div>
+        <button onclick="closeSheet()" class="w-full mt-6 py-4 text-sm font-black opacity-30">إغلاق</button>
+    </div>
+
+    <div id="app" class="app-shell">
+        
+        <section id="view-splash" class="absolute inset-0 bg-[#006C48] z-[5000] flex flex-col items-center justify-center p-12 transition-all duration-700">
+            <div class="text-center animate-pulse">
+                <div class="w-28 h-28 bg-white/10 backdrop-blur-2xl rounded-[3rem] flex items-center justify-center mx-auto mb-8 border border-white/20">
+                    <i class="fas fa-mountain text-white text-5xl"></i>
+                </div>
+                <h1 class="text-4xl font-black text-white mb-2 tracking-tighter">طويق</h1>
+                <p class="text-white/60 font-bold">المكان الذي تعانق فيه الهمة السماء</p>
             </div>
-            
+            <button onclick="startOnboarding()" class="mt-16 w-full max-w-xs bg-white text-emerald-900 font-black py-5 rounded-[2rem] shadow-2xl hover:scale-105 active:scale-95 transition-all">
+                ابدأ رحلتك الآن
+            </button>
+        </section>
+
+        <section id="view-setup" class="absolute inset-0 z-[4000] bg-white dark:bg-[#080a08] hidden overflow-y-auto no-scrollbar p-8">
+            <div class="mt-10 mb-12">
+                <h2 class="text-3xl font-black mb-3">جهز ملفك الشخصي</h2>
+                <p class="opacity-50 font-bold">أهلاً بك في مجتمع طويق، عرفنا على نفسك أولاً.</p>
+            </div>
+
+            <div class="flex flex-col items-center mb-10">
+                <div class="avatar-picker" onclick="changeAvatar()">
+                    <img id="setup-preview-img" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Tuwaiq">
+                    <div class="avatar-badge"><i class="fas fa-camera"></i></div>
+                </div>
+                <p class="text-[10px] font-black uppercase tracking-widest mt-4 opacity-40">انقر لتغيير الصورة</p>
+            </div>
+
             <div class="space-y-6">
-                <div class="flex flex-col items-center gap-3">
-                    <div class="relative group" onclick="document.getElementById('avatar-input').click()">
-                        <img id="edit-avatar-preview" src="" class="w-32 h-32 rounded-[2.5rem] object-cover border-4 border-[#006C48] shadow-xl">
-                        <div class="absolute inset-0 bg-black/40 rounded-[2.5rem] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
-                            <i class="fas fa-camera text-white text-2xl"></i>
-                        </div>
-                        <input type="file" id="avatar-input" accept="image/*" onchange="handleImageUpload(event)">
-                    </div>
-                    <p class="text-xs font-bold opacity-50">اضغط لتغيير الصورة من الألبوم</p>
+                <div>
+                    <label class="text-[10px] font-black opacity-30 mr-2 uppercase tracking-widest">الاسم الكامل</label>
+                    <input type="text" id="setup-name" placeholder="مثال: محمد بن سلمان" class="w-full bg-gray-100 dark:bg-white/5 border-none p-5 rounded-2xl outline-none focus:ring-2 ring-emerald-500 mt-1 font-bold">
                 </div>
-
-                <div class="space-y-2">
-                    <label class="text-sm font-black px-2">الاسم بالكامل</label>
-                    <input type="text" id="edit-name" placeholder="اسمك الكريم" class="w-full bg-gray-100 dark:bg-white/5 rounded-2xl p-4 font-bold outline-none border-2 border-transparent focus:border-[#006C48] transition">
+                <div>
+                    <label class="text-[10px] font-black opacity-30 mr-2 uppercase tracking-widest">اسم المستخدم</label>
+                    <input type="text" id="setup-user" placeholder="tuwaiq_2030" class="w-full bg-gray-100 dark:bg-white/5 border-none p-5 rounded-2xl outline-none focus:ring-2 ring-emerald-500 mt-1 font-bold">
                 </div>
-
-                <div class="space-y-2">
-                    <label class="text-sm font-black px-2">نبذة عنك (Bio)</label>
-                    <textarea id="edit-bio" placeholder="تحدث عن طموحاتك.." class="w-full bg-gray-100 dark:bg-white/5 rounded-2xl p-4 font-bold outline-none border-2 border-transparent focus:border-[#006C48] transition resize-none h-28"></textarea>
+                <div>
+                    <label class="text-[10px] font-black opacity-30 mr-2 uppercase tracking-widest">النبذة الشخصية</label>
+                    <textarea id="setup-bio" placeholder="ما هي اهتماماتك؟" class="w-full bg-gray-100 dark:bg-white/5 border-none p-5 rounded-2xl outline-none focus:ring-2 ring-emerald-500 h-28 resize-none mt-1 font-medium"></textarea>
                 </div>
-
-                <button onclick="saveProfileChanges()" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg hover:shadow-[#006C48]/40 active:scale-95 transition-all mt-4">حفظ البيانات</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main App Structure -->
-    <div id="app" class="app-container hidden">
-        <header class="shrink-0 bg-inherit/90 backdrop-blur-md px-6 py-4 flex justify-between items-center z-[60] border-b border-gray-500/5">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-[#006C48] rounded-xl flex items-center justify-center shadow-lg">
-                    <i class="fas fa-mountain text-white text-sm"></i>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="setup-loc" placeholder="المدينة (الرياض، نيوم..)" class="w-full bg-gray-100 dark:bg-white/5 border-none p-5 rounded-2xl outline-none font-bold">
+                    <input type="date" id="setup-birth" class="w-full bg-gray-100 dark:bg-white/5 border-none p-5 rounded-2xl outline-none font-bold">
                 </div>
-                <h1 class="text-xl font-black tracking-tighter">طويق</h1>
-            </div>
-            <div class="flex items-center gap-4 relative">
-                <button onclick="toggleDarkMode()" class="text-xl opacity-50 hover:opacity-100 transition"><i id="theme-icon" class="fas fa-moon"></i></button>
-                <button onclick="toggleSettings()" class="text-xl opacity-50 hover:opacity-100 transition"><i class="fas fa-sliders"></i></button>
                 
-                <div id="settings-menu" class="settings-menu">
-                    <button onclick="openEditModal()" class="w-full text-right px-6 py-4 hover:bg-gray-100 dark:hover:bg-white/5 border-b border-gray-500/5 flex items-center justify-between font-bold">
-                        <span>تعديل الملف</span>
-                        <i class="fas fa-user-pen text-xs opacity-40"></i>
-                    </button>
-                    <button onclick="handleLogout()" class="w-full text-right px-6 py-4 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 flex items-center justify-between font-bold">
-                        <span>تسجيل الخروج</span>
-                        <i class="fas fa-power-off text-xs opacity-60"></i>
-                    </button>
+                <button id="btn-complete-profile" onclick="saveInitialProfile()" class="w-full btn-action py-5 text-lg mt-4 flex items-center justify-center gap-3">
+                    <span>حفظ والانطلاق للرئيسية</span>
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+        </section>
+
+        <header id="main-header" class="glass-nav sticky top-0 px-6 py-4 flex items-center gap-4 hidden">
+            <div class="flex-1 relative">
+                <div class="bg-gray-100 dark:bg-white/5 rounded-2xl flex items-center px-4 py-3">
+                    <i class="fas fa-search opacity-20 ml-3"></i>
+                    <input type="text" id="search-input" placeholder="ابحث عن أشخاص أو مواضيع.." class="bg-transparent border-none outline-none w-full text-sm font-bold" oninput="globalSearch(this.value)">
                 </div>
             </div>
+            <button onclick="openUserMenu()" class="w-12 h-12 rounded-2xl overflow-hidden border-2 border-emerald-500/20 shadow-md">
+                <img id="header-avatar" src="" class="w-full h-full object-cover">
+            </button>
         </header>
 
-        <main class="no-scrollbar">
-            <!-- Home Feed View -->
-            <section id="view-home" class="view-content">
-                <div class="p-4">
-                    <div class="relative">
-                        <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 opacity-30"></i>
-                        <input type="text" placeholder="ابحث في طويق.." class="w-full bg-gray-500/5 rounded-2xl py-3 pr-11 pl-4 text-sm font-bold outline-none focus:bg-transparent focus:ring-2 ring-[#006C48]/20 transition">
-                    </div>
-                </div>
-
-                <div class="px-5 py-4 border-b border-gray-500/5">
-                    <div class="flex gap-4">
-                        <img id="user-avatar-mini" src="" class="w-12 h-12 rounded-2xl object-cover shadow-sm cursor-pointer" onclick="switchTab('profile')">
-                        <div class="flex-1">
-                            <textarea id="post-input" placeholder="ما الجديد في همتك؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium pt-2 h-12 overflow-hidden" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
-                            <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-500/5">
-                                <div class="flex gap-4 text-[#006C48] text-xl">
-                                    <button class="hover:bg-gray-100 p-2 rounded-xl transition"><i class="far fa-image"></i></button>
+        <main class="flex-1 overflow-y-auto no-scrollbar hidden" id="main-content">
+            <!-- Pages Container -->
+            <div id="pages">
+                <!-- Home Feed Page -->
+                <section id="page-home" class="page-view py-6">
+                    <!-- Composer -->
+                    <div class="px-6 pb-6 border-b border-gray-100 dark:border-white/5">
+                        <div class="flex gap-4">
+                            <img id="feed-avatar" src="" class="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-white/10 cursor-pointer hover:opacity-80 transition" onclick="viewProfile(currentUser.user)">
+                            <div class="flex-1">
+                                <textarea id="post-input" placeholder="ما هي همتك اليوم؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-xl font-bold h-12 pt-2 placeholder:opacity-40 outline-none" oninput="autoExpand(this)"></textarea>
+                                <div class="flex justify-between items-center mt-4">
+                                    <div class="flex gap-4 text-emerald-600/60">
+                                        <button class="w-8 h-8 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-500/10 flex items-center justify-center transition"><i class="far fa-image text-lg"></i></button>
+                                        <button class="w-8 h-8 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-500/10 flex items-center justify-center transition"><i class="far fa-map-marker-alt text-lg"></i></button>
+                                        <button class="w-8 h-8 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-500/10 flex items-center justify-center transition"><i class="far fa-face-smile text-lg"></i></button>
+                                    </div>
+                                    <button onclick="publishNewPost()" id="btn-publish" class="bg-emerald-600 text-white font-bold py-1.5 px-6 rounded-full hover:bg-emerald-700 transition">نشر</button>
                                 </div>
-                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-2.5 rounded-2xl font-black shadow-lg hover:scale-105 transition-all">نشر</button>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div id="main-feed" class="divide-y divide-gray-500/5 pb-32"></div>
-            </section>
+                    <!-- Feed List -->
+                    <div id="posts-feed" class="pb-32"></div>
+                </section>
 
-            <!-- Profile View -->
-            <section id="view-profile" class="view-content hidden pb-32">
-                <div class="h-48 bg-[#006C48] relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1548013146-72479768b921?auto=format&fit=crop&w=1200" class="w-full h-full object-cover opacity-40">
-                </div>
-                <div class="px-6 -mt-16 relative">
-                    <div class="flex justify-between items-end">
-                        <img id="profile-avatar-large" src="" class="w-32 h-32 rounded-[2.8rem] bg-white border-8 border-white dark:border-[#0f130f] shadow-2xl object-cover">
-                        <button onclick="openEditModal()" class="mb-2 bg-gray-100 dark:bg-white/5 px-6 py-2.5 rounded-2xl font-black text-sm border border-gray-500/10">تعديل الملف</button>
+                <!-- Explore/Trends Page -->
+                <section id="page-explore" class="page-view hidden p-6">
+                    <h2 class="text-3xl font-black mb-10 tracking-tight">استكشف الترند</h2>
+                    <div id="trends-list" class="space-y-4">
+                        <!-- Trends will be injected here -->
                     </div>
-                    <div class="mt-5">
-                        <div class="flex items-center gap-2">
-                            <h2 id="profile-name" class="text-2xl font-black">--</h2>
-                            <i class="fas fa-shield-check text-[#D4AF37] text-sm"></i>
+                </section>
+
+                <!-- Profile View Page -->
+                <section id="page-profile" class="page-view hidden">
+                    <div class="h-36 bg-gradient-to-br from-emerald-800 to-emerald-950 relative">
+                        <div class="absolute -bottom-12 right-6">
+                            <img id="profile-large-avatar" src="" class="w-24 h-24 rounded-full border-4 border-white dark:border-[#080a08] object-cover bg-white">
                         </div>
-                        <p id="profile-handle" class="text-[#006C48] font-black text-sm mt-0.5">@--</p>
-                        <p id="profile-bio" class="mt-4 text-sm font-medium opacity-80 leading-relaxed max-w-sm">--</p>
                     </div>
-                    <div class="flex gap-8 mt-6 pb-6">
-                        <div class="flex gap-1.5 items-center"><span class="font-black text-lg">1.2K</span><span class="text-[10px] opacity-40 font-black">متابِع</span></div>
-                        <div class="flex gap-1.5 items-center"><span class="font-black text-lg">850</span><span class="text-[10px] opacity-40 font-black">يتابعني</span></div>
+                    <div class="mt-14 px-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <h2 id="profile-full-name" class="text-xl font-black">--</h2>
+                                    <i class="fas fa-certificate text-emerald-500 text-[12px]"></i>
+                                </div>
+                                <p id="profile-handle" class="text-gray-500 dark:text-gray-400 text-[14px] mt-0.5" dir="ltr">@--</p>
+                            </div>
+                            <button id="profile-action-btn" class="px-5 py-1.5 rounded-full font-bold text-[14px] border transition"></button>
+                        </div>
+                        <p id="profile-bio-text" class="mt-4 text-[15px] font-medium leading-relaxed">--</p>
+                        
+                        <div class="flex gap-4 mt-3 text-[14px] text-gray-500">
+                            <span class="hover:underline cursor-pointer"><b id="profile-following-count" class="text-black dark:text-white">0</b> يتابع</span>
+                            <span class="hover:underline cursor-pointer"><b id="profile-followers-count" class="text-black dark:text-white">0</b> متابعون</span>
+                        </div>
+                        
+                        <div class="flex gap-6 mt-4 pt-4 border-t border-gray-100 dark:border-white/5 text-[12px] font-bold opacity-50">
+                            <span id="profile-location"><i class="fas fa-map-location-dot ml-1.5"></i>--</span>
+                            <span id="profile-date"><i class="fas fa-calendar-day ml-1.5"></i>--</span>
+                        </div>
                     </div>
-                </div>
-                <div class="flex border-b border-gray-500/5 sticky top-0 bg-inherit z-20">
-                    <button onclick="setProfileTab('my-tweets')" id="tab-my-tweets" class="flex-1 py-5 text-xs font-black transition-all profile-tab-active">تغريداتي</button>
-                    <button onclick="setProfileTab('my-likes')" id="tab-my-likes" class="flex-1 py-5 text-xs font-black transition-all opacity-30">الإعجابات</button>
-                </div>
-                <div id="user-posts-feed" class="divide-y divide-gray-500/5"></div>
-            </section>
+                    
+                    <div class="mt-4 flex border-b border-gray-100 dark:border-white/5">
+                        <button class="flex-1 py-4 font-bold text-emerald-600 border-b-2 border-emerald-600 text-[15px]">المنشورات</button>
+                        <button class="flex-1 py-4 font-bold text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition text-[15px]">الإعجابات</button>
+                    </div>
+
+                    <div id="profile-posts" class="pb-32"></div>
+                </section>
+            </div>
         </main>
 
-        <nav class="shrink-0 bg-inherit border-t border-gray-500/5 flex justify-around items-center h-20 z-[100]">
-            <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1 flex-1">
+        <nav id="bottom-nav" class="shrink-0 bg-white/80 dark:bg-black/80 backdrop-blur-2xl border-t border-gray-500/5 flex justify-around items-center h-20 px-4 hidden">
+            <div onclick="switchTab('home')" id="tab-home" class="nav-item flex flex-col items-center gap-1.5 cursor-pointer text-emerald-600">
                 <i class="fas fa-home-alt text-xl"></i>
-                <span class="text-[9px] font-black">الرئيسية</span>
-            </button>
-            <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1 flex-1">
-                <i class="fas fa-user text-xl"></i>
-                <span class="text-[9px] font-black">حسابي</span>
-            </button>
+                <span class="text-[10px] font-black uppercase">الرئيسية</span>
+            </div>
+            <div onclick="switchTab('explore')" id="tab-explore" class="nav-item flex flex-col items-center gap-1.5 cursor-pointer opacity-30">
+                <i class="fas fa-hashtag text-xl"></i>
+                <span class="text-[10px] font-black uppercase">استكشف</span>
+            </div>
+            <div onclick="switchTab('profile')" id="tab-profile" class="nav-item flex flex-col items-center gap-1.5 cursor-pointer opacity-30">
+                <i class="fas fa-user-circle text-xl"></i>
+                <span class="text-[10px] font-black uppercase">الملف</span>
+            </div>
         </nav>
     </div>
 
     <script>
-        // Supabase Config - DO NOT EDIT
         const SUPABASE_URL = 'https://cuaoopauabnmpmoddvby.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW9vcGF1YWJubXBtb2RkdmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjgyNDUsImV4cCI6MjA5MzIwNDI0NX0._vyBPMk3oaJqMJaBRY4DaKj2ZjSodKPxZ77kFiZUH9o';
-        const { createClient } = supabase;
-        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let userSession = null;
+        let currentUser = null;
         let allPosts = [];
         let currentTab = 'home';
-        let currentProfileTab = 'my-tweets';
+        let currentPostContext = null;
 
-        window.onload = () => initApp();
+        window.onload = () => {
+            const savedSession = localStorage.getItem('tuwaiq_prime_v2');
+            if (savedSession) {
+                currentUser = JSON.parse(savedSession);
+                // Ensure arrays exist for new features
+                if (!currentUser.liked) currentUser.liked = [];
+                if (!currentUser.following) currentUser.following = [];
+
+                if (currentUser.is_new) {
+                    showView('view-setup');
+                } else {
+                    document.getElementById('view-splash').classList.add('hidden');
+                    initApp();
+                }
+            }
+            if (localStorage.getItem('tuwaiq_dark') === 'true') document.body.classList.add('dark-mode');
+        };
+
+        function startOnboarding() {
+            const tempUser = { is_new: true, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + Date.now(), liked: [], following: [] };
+            currentUser = tempUser;
+            showView('view-setup');
+        }
+
+        function showView(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
 
         function initApp() {
-            const stored = localStorage.getItem('tuwaiq_user');
-            if (stored) {
-                userSession = JSON.parse(stored);
-                showApp();
-            } else {
-                document.getElementById('view-login').classList.remove('hidden');
-            }
+            document.getElementById('main-header').classList.remove('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            
+            updateGlobalUI();
+            loadFeed();
+            renderTrends();
         }
 
-        function handleLogin() {
-            const id = Math.random().toString(36).substring(7);
-            userSession = {
-                id: 'usr_' + id,
-                full_name: 'بطل طويق',
-                username: 'tuwaiq_' + id.substring(0,3),
-                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${id}`,
-                bio: 'همة تعانق السماء 🇸🇦'
-            };
-            localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
-            showApp();
+        function changeAvatar() {
+            const seed = Math.random().toString(36).substring(7);
+            currentUser.avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+            document.getElementById('setup-preview-img').src = currentUser.avatar;
         }
 
-        function showApp() {
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            refreshUI();
-            loadPosts();
-        }
-
-        function refreshUI() {
-            if(!userSession) return;
-            document.getElementById('user-avatar-mini').src = userSession.avatar_url;
-            document.getElementById('profile-avatar-large').src = userSession.avatar_url;
-            document.getElementById('profile-name').innerText = userSession.full_name;
-            document.getElementById('profile-handle').innerText = `@${userSession.username}`;
-            document.getElementById('profile-bio').innerText = userSession.bio || "لا توجد نبذة..";
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('edit-avatar-preview').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function openEditModal() {
-            document.getElementById('edit-avatar-preview').src = userSession.avatar_url;
-            document.getElementById('edit-name').value = userSession.full_name;
-            document.getElementById('edit-bio').value = userSession.bio || "";
-            document.getElementById('modal-edit-profile').classList.remove('hidden');
-            document.getElementById('settings-menu').classList.remove('show');
-        }
-
-        function closeEditModal() {
-            document.getElementById('modal-edit-profile').classList.add('hidden');
-        }
-
-        async function saveProfileChanges() {
-            const newName = document.getElementById('edit-name').value.trim();
-            const newBio = document.getElementById('edit-bio').value.trim();
-            const newAvatar = document.getElementById('edit-avatar-preview').src;
-
-            if (!newName) {
-                showToast("يرجى إدخال الاسم");
+        function saveInitialProfile() {
+            const name = document.getElementById('setup-name').value.trim();
+            const user = document.getElementById('setup-user').value.trim();
+            const bio = document.getElementById('setup-bio').value.trim();
+            
+            if (!name || !user) {
+                showToast("الاسم واسم المستخدم مطلوبين!");
                 return;
             }
 
-            // تحديث بيانات الجلسة الحالية
-            userSession.full_name = newName;
-            userSession.bio = newBio;
-            userSession.avatar_url = newAvatar;
+            currentUser = {
+                id: 'tuwaiq_user_' + Date.now(),
+                name: name,
+                user: user.replace('@', ''),
+                bio: bio || 'عضو في مجتمع طويق 🇸🇦',
+                avatar: currentUser.avatar,
+                loc: document.getElementById('setup-loc').value || 'الرياض',
+                birth: document.getElementById('setup-birth').value || '',
+                is_new: false,
+                liked: [],
+                following: []
+            };
 
-            // الحفظ في LocalStorage
-            localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
+            localStorage.setItem('tuwaiq_prime_v2', JSON.stringify(currentUser));
+            showToast("تم إعداد ملفك بنجاح! ✨");
             
-            // تحديث الواجهة
-            refreshUI();
-            closeEditModal();
-            showToast("تم الحفظ بنجاح ✅");
-            
-            // إعادة تحميل المنشورات لتحديث الصور والأسماء فيها
-            loadPosts();
+            setTimeout(() => {
+                showView('main-header'); // just for clearing, initApp handles it
+                initApp();
+            }, 500);
         }
 
-        async function loadPosts() {
-            const { data, error } = await _supabase
-                .from('posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-
+        async function loadFeed() {
+            const { data, error } = await _db.from('posts').select('*').order('created_at', { ascending: false });
             if (!error) {
                 allPosts = data;
-                renderFeed('main-feed', allPosts);
-                if (currentTab === 'profile') refreshProfileFeed();
+                renderPosts('posts-feed', allPosts);
+                if (currentTab === 'profile') renderProfileData(document.getElementById('profile-handle').innerText.replace('@',''));
             }
         }
 
-        async function publishPost() {
-            const input = document.getElementById('post-input');
-            const content = input.value.trim();
-            if (!content) return;
+        function renderPosts(containerId, list) {
+            const container = document.getElementById(containerId);
+            if (!list.length) {
+                container.innerHTML = `<div class="p-10 text-center opacity-40 font-black mt-10">لا توجد منشورات</div>`;
+                return;
+            }
 
-            const { error } = await _supabase.from('posts').insert([{
-                content: content,
-                author_name: userSession.full_name,
-                author_avatar: userSession.avatar_url,
-                username: userSession.username,
+            container.innerHTML = list.map(p => {
+                const isMe = p.username === currentUser.user;
+                const isLiked = currentUser.liked?.includes(p.id);
+                const commentsKey = 'tuwaiq_comments_' + p.id;
+                const localComments = JSON.parse(localStorage.getItem(commentsKey) || '[]');
+                const commentCount = localComments.length || '';
+                
+                let timeStr = "";
+                try {
+                    const dateObj = new Date(p.created_at);
+                    timeStr = isNaN(dateObj) ? '' : dateObj.toLocaleDateString('ar-SA');
+                } catch(e) {}
+
+                return `
+                <div class="post-card group border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition">
+                    <div class="flex gap-3">
+                        <img src="${p.author_avatar}" class="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-white/10 shrink-0 cursor-pointer hover:opacity-80 transition" onclick="viewProfile('${p.username}')">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center gap-1.5 cursor-pointer truncate" onclick="viewProfile('${p.username}')">
+                                    <h4 class="text-[15px] font-black truncate hover:underline">${p.author_name}</h4>
+                                    <span class="text-[14px] text-gray-500 truncate" dir="ltr">@${p.username}</span>
+                                    <span class="text-gray-400 mx-0.5">·</span>
+                                    <span class="text-[13px] text-gray-500 whitespace-nowrap">${timeStr}</span>
+                                </div>
+                                <button onclick="openPostOptions('${p.id}', ${isMe})" class="w-8 h-8 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-600 transition flex items-center justify-center shrink-0">
+                                    <i class="fas fa-ellipsis-h text-[13px]"></i>
+                                </button>
+                            </div>
+                            <div class="text-[15px] leading-normal mt-0.5 mb-3 text-gray-900 dark:text-gray-100 cursor-pointer pr-1 whitespace-pre-wrap" onclick="openComments('${p.id}')">${formatPostText(p.content)}</div>
+                            <div class="flex justify-between items-center pr-2 max-w-sm">
+                                <button onclick="openComments('${p.id}')" class="group/btn flex items-center gap-1.5 text-[13px] font-bold text-gray-500 hover:text-blue-500 transition">
+                                    <div class="w-8 h-8 rounded-full group-hover/btn:bg-blue-50 dark:group-hover/btn:bg-blue-500/10 flex items-center justify-center transition">
+                                        <i class="far fa-comment"></i>
+                                    </div>
+                                    <span>${commentCount}</span>
+                                </button>
+                                <button class="group/btn flex items-center gap-1.5 text-[13px] font-bold text-gray-500 hover:text-emerald-500 transition">
+                                    <div class="w-8 h-8 rounded-full group-hover/btn:bg-emerald-50 dark:group-hover/btn:bg-emerald-500/10 flex items-center justify-center transition">
+                                        <i class="fas fa-retweet"></i>
+                                    </div>
+                                    <span></span>
+                                </button>
+                                <button onclick="toggleLike('${p.id}')" class="group/btn flex items-center gap-1.5 text-[13px] font-bold ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'} transition">
+                                    <div class="w-8 h-8 rounded-full group-hover/btn:bg-red-50 dark:group-hover/btn:bg-red-500/10 flex items-center justify-center transition">
+                                        <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
+                                    </div>
+                                    <span id="like-count-${p.id}">${p.likes > 0 ? p.likes : ''}</span>
+                                </button>
+                                <button class="group/btn flex items-center gap-1.5 text-[13px] font-bold text-gray-500 hover:text-emerald-500 transition">
+                                    <div class="w-8 h-8 rounded-full group-hover/btn:bg-emerald-50 dark:group-hover/btn:bg-emerald-500/10 flex items-center justify-center transition">
+                                        <i class="far fa-share-square"></i>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function publishNewPost() {
+            const txt = document.getElementById('post-input').value.trim();
+            if (!txt) return;
+
+            const btn = document.getElementById('btn-publish');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+
+            const { error } = await _db.from('posts').insert([{
+                content: txt,
+                author_name: currentUser.name,
+                author_avatar: currentUser.avatar,
+                username: currentUser.user,
                 likes: 0
             }]);
 
+            btn.disabled = false;
+            btn.innerText = "نشر";
+
             if (!error) {
-                input.value = "";
-                loadPosts();
-                showToast("تم النشر 🚀");
+                document.getElementById('post-input').value = "";
+                showToast("تم النشر بنجاح 🚀");
+                loadFeed();
             }
         }
 
-        function renderFeed(containerId, posts) {
-            const container = document.getElementById(containerId);
-            if (!posts.length) {
-                container.innerHTML = `<div class="p-20 text-center opacity-30 font-bold">لا يوجد محتوى</div>`;
+        function globalSearch(val) {
+            const q = val.toLowerCase();
+            const filtered = allPosts.filter(p => 
+                p.content.toLowerCase().includes(q) || 
+                p.author_name.toLowerCase().includes(q) || 
+                p.username.toLowerCase().includes(q)
+            );
+            renderPosts('posts-feed', filtered);
+        }
+
+        function openUserMenu() {
+            const body = document.getElementById('sheet-body');
+            body.innerHTML = `
+                <button onclick="switchTab('profile')" class="w-full flex items-center justify-between p-5 rounded-2xl bg-gray-50 dark:bg-white/5 font-black">
+                    <span>عرض الملف الشخصي</span>
+                    <i class="fas fa-user-shield opacity-30"></i>
+                </button>
+                <button onclick="toggleTheme()" class="w-full flex items-center justify-between p-5 rounded-2xl bg-gray-50 dark:bg-white/5 font-black">
+                    <span>تبديل الوضع الليلي</span>
+                    <i class="fas fa-circle-half-stroke opacity-30"></i>
+                </button>
+                <button onclick="logout()" class="w-full flex items-center justify-between p-5 rounded-2xl bg-red-500/5 text-red-600 font-black">
+                    <span>تسجيل الخروج</span>
+                    <i class="fas fa-power-off opacity-30"></i>
+                </button>
+            `;
+            openSheet();
+        }
+
+        function openPostOptions(id, isMe) {
+            const body = document.getElementById('sheet-body');
+            body.innerHTML = isMe ? `
+                <button onclick="deletePost('${id}')" class="w-full flex items-center justify-between p-5 rounded-2xl bg-red-500/5 text-red-600 font-black">
+                    <span>حذف المنشور نهائياً</span>
+                    <i class="fas fa-trash-can opacity-30"></i>
+                </button>
+            ` : `
+                <button onclick="reportPost('${id}')" class="w-full flex items-center justify-between p-5 rounded-2xl bg-orange-500/5 text-orange-600 font-black">
+                    <span>بلاغ عن محتوى غير لائق</span>
+                    <i class="fas fa-flag opacity-30"></i>
+                </button>
+                <button class="w-full flex items-center justify-between p-5 rounded-2xl bg-gray-50 dark:bg-white/5 font-black">
+                    <span>متابعة المستخدم</span>
+                    <i class="fas fa-user-plus opacity-30"></i>
+                </button>
+            `;
+            openSheet();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${tab}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(i => {
+                i.classList.add('opacity-30');
+                i.classList.remove('text-emerald-600');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('opacity-30');
+            document.getElementById(`tab-${tab}`).classList.add('text-emerald-600');
+
+            if (tab === 'profile') renderProfileData(currentUser.user);
+            closeSheet();
+            window.scrollTo(0,0);
+        }
+
+        function viewProfile(username) {
+            currentTab = 'profile';
+            document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-profile').classList.remove('hidden');
+            
+            // إزالة التحديد من القائمة السفلية إذا كان ليس حسابي
+            document.querySelectorAll('.nav-item').forEach(i => {
+                i.classList.add('opacity-30');
+                i.classList.remove('text-emerald-600');
+            });
+            if (username === currentUser.user) {
+                document.getElementById('tab-profile').classList.remove('opacity-30');
+                document.getElementById('tab-profile').classList.add('text-emerald-600');
+            }
+
+            renderProfileData(username);
+            window.scrollTo(0,0);
+        }
+
+        function renderProfileData(username) {
+            const isMe = username === currentUser.user;
+            let profileUser = null;
+
+            if (isMe) {
+                profileUser = currentUser;
+            } else {
+                const userPost = allPosts.find(p => p.username === username);
+                if (userPost) {
+                    profileUser = {
+                        name: userPost.author_name,
+                        user: userPost.username,
+                        avatar: userPost.author_avatar,
+                        bio: "عضو في مجتمع طويق 🇸🇦",
+                        loc: "المملكة العربية السعودية"
+                    };
+                }
+            }
+
+            if (!profileUser) return;
+
+            document.getElementById('profile-large-avatar').src = profileUser.avatar;
+            document.getElementById('profile-full-name').innerText = profileUser.name;
+            document.getElementById('profile-handle').innerText = `@${profileUser.user}`;
+            document.getElementById('profile-bio-text').innerText = profileUser.bio || '';
+            document.getElementById('profile-location').innerHTML = `<i class="fas fa-map-location-dot ml-1.5"></i>${profileUser.loc || 'الرياض'}`;
+            document.getElementById('profile-date').innerHTML = `<i class="fas fa-calendar-day ml-1.5"></i>منضم حديثاً`;
+
+            const actionBtn = document.getElementById('profile-action-btn');
+            if (isMe) {
+                actionBtn.innerText = "تعديل الملف";
+                actionBtn.className = "px-5 py-1.5 rounded-full font-bold text-[14px] border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-white/10 transition";
+                actionBtn.onclick = () => showToast("تعديل الملف غير متاح حالياً");
+                document.getElementById('profile-following-count').innerText = currentUser.following?.length || 0;
+            } else {
+                const isFollowing = currentUser.following?.includes(profileUser.user);
+                if (isFollowing) {
+                    actionBtn.innerText = "يتابع";
+                    actionBtn.className = "px-5 py-1.5 rounded-full font-bold text-[14px] border border-gray-300 dark:border-gray-600 hover:text-red-500 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition group";
+                    actionBtn.onmouseover = () => actionBtn.innerText = "إلغاء المتابعة";
+                    actionBtn.onmouseout = () => actionBtn.innerText = "يتابع";
+                    actionBtn.onclick = () => toggleFollow(profileUser.user);
+                } else {
+                    actionBtn.innerText = "متابعة";
+                    actionBtn.className = "px-5 py-1.5 rounded-full font-bold text-[14px] bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition";
+                    actionBtn.onclick = () => toggleFollow(profileUser.user);
+                    actionBtn.onmouseover = null;
+                    actionBtn.onmouseout = null;
+                }
+                document.getElementById('profile-following-count').innerText = "0"; // رقم وهمي للواقعية
+            }
+            document.getElementById('profile-followers-count').innerText = isMe ? "0" : (currentUser.following?.includes(profileUser.user) ? "1" : "0");
+
+            const myPosts = allPosts.filter(p => p.username === profileUser.user);
+            renderPosts('profile-posts', myPosts);
+        }
+
+        function toggleFollow(username) {
+            if(!currentUser.following) currentUser.following = [];
+            if (currentUser.following.includes(username)) {
+                currentUser.following = currentUser.following.filter(u => u !== username);
+            } else {
+                currentUser.following.push(username);
+            }
+            localStorage.setItem('tuwaiq_prime_v2', JSON.stringify(currentUser));
+            renderProfileData(username);
+        }
+
+        function renderTrends() {
+            const trends = [
+                { tag: '#رؤية_السعودية_2030', count: '1.4M' },
+                { tag: '#همة_حتى_القمة', count: '840K' },
+                { tag: '#نيوم_المستقبل', count: '512K' },
+                { tag: '#شتاء_السعودية', count: '320K' },
+                { tag: '#طويق_للبحث', count: '102K' }
+            ];
+            document.getElementById('trends-list').innerHTML = trends.map(t => `
+                <div onclick="setSearch('${t.tag}')" class="p-6 rounded-[2rem] bg-emerald-500/5 border border-emerald-500/10 flex justify-between items-center active:scale-95 transition cursor-pointer">
+                    <div>
+                        <div class="text-[10px] font-black opacity-30 uppercase mb-1">الآن في السعودية</div>
+                        <div class="text-xl font-black text-emerald-700">${t.tag}</div>
+                    </div>
+                    <div class="text-xs font-black opacity-40">${t.count} منشور</div>
+                </div>
+            `).join('');
+        }
+
+        function setSearch(tag) {
+            document.getElementById('search-input').value = tag;
+            switchTab('home');
+            globalSearch(tag);
+        }
+
+        function formatPostText(text) {
+            return text.replace(/(#[^\s]+)/g, '<span class="text-emerald-600 font-black">$1</span>');
+        }
+
+        function autoExpand(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+
+        async function toggleLike(id) {
+            if(!currentUser.liked) currentUser.liked = [];
+            
+            const isLiked = currentUser.liked.includes(id);
+            const postIndex = allPosts.findIndex(p => p.id === id);
+            if(postIndex === -1) return;
+
+            // تحديث فوري وسريع للواجهة (Optimistic UI)
+            const countSpan = document.getElementById(`like-count-${id}`);
+            const btnIcons = document.querySelectorAll(`button[onclick="toggleLike('${id}')"] i`);
+            
+            if (isLiked) {
+                currentUser.liked = currentUser.liked.filter(pid => pid !== id);
+                allPosts[postIndex].likes = Math.max(0, (allPosts[postIndex].likes || 0) - 1);
+                
+                if(countSpan) countSpan.innerText = allPosts[postIndex].likes > 0 ? allPosts[postIndex].likes : '';
+                btnIcons.forEach(icon => {
+                    icon.className = "far fa-heart"; 
+                    icon.closest('button').className = "group/btn flex items-center gap-1.5 text-[13px] font-bold text-gray-500 hover:text-red-500 transition";
+                });
+            } else {
+                currentUser.liked.push(id);
+                allPosts[postIndex].likes = (allPosts[postIndex].likes || 0) + 1;
+                
+                if(countSpan) countSpan.innerText = allPosts[postIndex].likes;
+                btnIcons.forEach(icon => {
+                    icon.className = "fas fa-heart text-red-500"; 
+                    icon.closest('button').className = "group/btn flex items-center gap-1.5 text-[13px] font-bold text-red-500 transition";
+                });
+            }
+            
+            localStorage.setItem('tuwaiq_prime_v2', JSON.stringify(currentUser));
+            
+            // تحديث قاعدة البيانات في الخلفية
+            _db.from('posts').update({ likes: allPosts[postIndex].likes }).eq('id', id).then();
+        }
+
+        function openComments(postId) {
+            currentPostContext = allPosts.find(p => p.id === postId);
+            if(!currentPostContext) return;
+
+            const detailView = document.getElementById('post-detail-view');
+            const mainContent = document.getElementById('main-post-content');
+            
+            let timeStr = "";
+            try {
+                const dateObj = new Date(currentPostContext.created_at);
+                timeStr = isNaN(dateObj) ? '' : dateObj.toLocaleString('ar-SA');
+            } catch(e) {}
+
+            mainContent.innerHTML = `
+                <div class="flex gap-3 mb-4">
+                    <img src="${currentPostContext.author_avatar}" class="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-white/10 cursor-pointer" onclick="closeComments(); viewProfile('${currentPostContext.username}')">
+                    <div class="cursor-pointer" onclick="closeComments(); viewProfile('${currentPostContext.username}')">
+                        <h4 class="font-black hover:underline">${currentPostContext.author_name}</h4>
+                        <p class="text-gray-500 text-[14px]" dir="ltr">@${currentPostContext.username}</p>
+                    </div>
+                </div>
+                <p class="text-[18px] mb-4 leading-relaxed text-gray-900 dark:text-white whitespace-pre-wrap">${formatPostText(currentPostContext.content)}</p>
+                <p class="text-gray-500 text-[14px] mb-4 border-b border-gray-100 dark:border-white/5 pb-4">${timeStr}</p>
+                <div class="py-1 flex gap-6 text-[14px] text-gray-500">
+                    <span><b id="detail-like-count" class="text-black dark:text-white">${currentPostContext.likes || 0}</b> إعجابات</span>
+                </div>
+            `;
+
+            document.getElementById('comment-avatar').src = currentUser.avatar;
+            renderCommentsList();
+            
+            detailView.classList.remove('hidden');
+            setTimeout(() => detailView.classList.remove('translate-x-full'), 10);
+        }
+
+        function closeComments() {
+            const detailView = document.getElementById('post-detail-view');
+            detailView.classList.add('translate-x-full');
+            setTimeout(() => detailView.classList.add('hidden'), 300);
+            currentPostContext = null;
+            renderPosts('posts-feed', allPosts); // تحديث الأعداد في الواجهة الرئيسية
+        }
+
+        function addComment() {
+            const input = document.getElementById('comment-input');
+            const txt = input.value.trim();
+            if(!txt || !currentPostContext) return;
+
+            const commentsKey = 'tuwaiq_comments_' + currentPostContext.id;
+            let comments = JSON.parse(localStorage.getItem(commentsKey) || '[]');
+            
+            comments.push({
+                id: Date.now(),
+                author_name: currentUser.name,
+                username: currentUser.user,
+                author_avatar: currentUser.avatar,
+                content: txt,
+                created_at: new Date().toISOString()
+            });
+            
+            localStorage.setItem(commentsKey, JSON.stringify(comments));
+            input.value = '';
+            renderCommentsList();
+        }
+
+        function renderCommentsList() {
+            if(!currentPostContext) return;
+            const feed = document.getElementById('comments-feed');
+            const commentsKey = 'tuwaiq_comments_' + currentPostContext.id;
+            let comments = JSON.parse(localStorage.getItem(commentsKey) || '[]');
+
+            if(comments.length === 0) {
+                feed.innerHTML = '<div class="p-10 text-center opacity-40 font-black mt-10">لا توجد ردود بعد. كن أول من يرد!</div>';
                 return;
             }
 
-            container.innerHTML = posts.map(post => `
-                <div class="p-5">
-                    <div class="flex gap-4 mb-3">
-                        <img src="${post.author_avatar}" class="w-12 h-12 rounded-2xl object-cover">
-                        <div class="flex-1">
-                            <h4 class="font-black text-sm">${post.author_name}</h4>
-                            <p class="text-[11px] text-[#006C48] font-bold">@${post.username}</p>
+            feed.innerHTML = comments.slice().reverse().map(c => `
+                <div class="p-4 border-b border-gray-100 dark:border-white/5 flex gap-3 hover:bg-gray-50 dark:hover:bg-white/5 transition">
+                    <img src="${c.author_avatar}" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-white/10 cursor-pointer" onclick="closeComments(); viewProfile('${c.username}')">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 cursor-pointer truncate" onclick="closeComments(); viewProfile('${c.username}')">
+                            <span class="font-black text-[14px] hover:underline truncate">${c.author_name}</span>
+                            <span class="text-gray-500 text-[13px] truncate" dir="ltr">@${c.username}</span>
                         </div>
-                    </div>
-                    <p class="text-[15px] mb-4">${post.content}</p>
-                    <div class="flex gap-10 opacity-40 text-xs font-black">
-                        <button onclick="likePost('${post.id}')"><i class="far fa-heart ml-1"></i>${post.likes || 0}</button>
-                        <button><i class="far fa-comment ml-1"></i>0</button>
+                        <p class="text-[14px] mt-0.5 leading-normal text-gray-900 dark:text-gray-100 whitespace-pre-wrap">${c.content}</p>
                     </div>
                 </div>
             `).join('');
         }
 
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
-            document.getElementById(`nav-${tab}`).classList.add('nav-active');
-            if (tab === 'profile') refreshProfileFeed();
-            document.getElementById('settings-menu').classList.remove('show');
+        async function deletePost(id) {
+            const { error } = await _db.from('posts').delete().eq('id', id);
+            closeSheet();
+            if (!error) {
+                showToast("تم حذف المنشور");
+                loadFeed();
+            }
         }
 
-        function setProfileTab(tabId) {
-            currentProfileTab = tabId;
-            document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove('profile-tab-active'));
-            document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.add('opacity-30'));
-            const el = document.getElementById(`tab-${tabId}`);
-            el.classList.add('profile-tab-active');
-            el.classList.remove('opacity-30');
-            refreshProfileFeed();
-        }
-
-        function refreshProfileFeed() {
-            const filtered = allPosts.filter(p => p.username === userSession.username);
-            renderFeed('user-posts-feed', filtered);
-        }
-
-        function toggleSettings() {
-            document.getElementById('settings-menu').classList.toggle('show');
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('tuwaiq_user');
-            window.location.reload();
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const icon = document.getElementById('theme-icon');
-            icon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
-        }
-
+        function reportPost() { closeSheet(); showToast("شكراً لك، تم استلام بلاغك 🛡️"); }
+        function openSheet() { document.getElementById('action-sheet').classList.add('open'); document.getElementById('main-overlay').classList.add('active'); }
+        function closeSheet() { document.getElementById('action-sheet').classList.remove('open'); document.getElementById('main-overlay').classList.remove('active'); }
+        function toggleTheme() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('tuwaiq_dark', isDark); closeSheet(); }
+        function logout() { localStorage.removeItem('tuwaiq_prime_v2'); location.reload(); }
         function showToast(msg) {
             const t = document.createElement('div');
-            t.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-8 py-3 rounded-2xl text-sm font-black shadow-2xl z-[2000]";
-            t.innerText = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 2500);
+            t.className = "bg-emerald-900 text-white px-8 py-4 rounded-3xl text-sm font-black shadow-2xl mb-4 animate-slide flex items-center gap-3 border border-white/10";
+            t.innerHTML = `<i class="fas fa-bell"></i> ${msg}`;
+            document.getElementById('toast-box').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
         }
 
-        async function likePost(id) {
-            const post = allPosts.find(p => p.id === id);
-            await _supabase.from('posts').update({ likes: (post.likes || 0) + 1 }).eq('id', id);
-            loadPosts();
+        function updateGlobalUI() {
+            document.getElementById('header-avatar').src = currentUser.avatar;
+            document.getElementById('feed-avatar').src = currentUser.avatar;
         }
+
     </script>
 </body>
 </html>
