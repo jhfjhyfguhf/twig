@@ -105,7 +105,7 @@
 </head>
 <body>
 
-    <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
+    <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center transition-all duration-500">
         <div class="mb-10 text-white">
             <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6">
                 <i class="fas fa-mountain text-[#006C48] text-4xl"></i>
@@ -122,7 +122,7 @@
                 <i class="fas fa-envelope"></i>
                 أرسل رابط الدخول
             </button>
-            <p class="text-white/50 text-[10px]">ستصلك رسالة تحتوي على رابط لتسجيل الدخول الفوري والآمن</p>
+            <p id="login-status" class="text-white/50 text-[10px]">سيصلك رابط تسجيل دخول آمن على بريدك</p>
         </div>
     </div>
 
@@ -168,7 +168,6 @@
         </header>
 
         <main class="no-scrollbar">
-            <!-- Home Section -->
             <section id="view-home" class="view-content">
                 <div class="search-bar-container">
                     <div class="relative">
@@ -177,7 +176,6 @@
                     </div>
                 </div>
 
-                <!-- Post Box -->
                 <div class="p-4 border-b border-gray-500/5 bg-inherit">
                     <div class="flex gap-4">
                         <img id="user-avatar-mini" src="" class="w-11 h-11 rounded-2xl bg-gray-100 shadow-sm object-cover cursor-pointer" onclick="switchTab('profile')">
@@ -191,62 +189,30 @@
                                     </label>
                                     <button class="hover:bg-gray-100 p-2 rounded-full transition"><i class="far fa-smile"></i></button>
                                 </div>
-                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-2 rounded-full font-black shadow-lg hover:brightness-110 active:scale-95 transition-all">نشر</button>
+                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-2 rounded-full font-black shadow-lg">نشر</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Stories -->
-                <div class="flex gap-4 p-4 overflow-x-auto no-scrollbar bg-gray-500/[0.02] border-b border-gray-500/5 shrink-0">
-                    <div class="flex flex-col items-center gap-1 min-w-[70px]">
-                        <input type="file" id="story-file" class="hidden" accept="image/*" onchange="uploadStory(this)">
-                        <div onclick="document.getElementById('story-file').click()" class="w-16 h-16 rounded-2xl border-2 border-dashed border-[#006C48] flex items-center justify-center cursor-pointer hover:bg-[#006C48]/5 transition">
-                            <i class="fas fa-plus text-[#006C48]"></i>
-                        </div>
-                        <span class="text-[10px] font-bold">قصتك</span>
-                    </div>
-                    <div id="stories-list" class="flex gap-4"></div>
-                </div>
-
                 <div id="main-feed" class="divide-y divide-gray-500/5 scroll-spacer"></div>
             </section>
 
-            <!-- Profile Section -->
             <section id="view-profile" class="view-content hidden scroll-spacer">
-                <div class="h-44 bg-gradient-to-br from-[#006C48] to-[#004d33] relative">
-                    <button id="back-to-feed" class="absolute top-4 right-4 z-10 w-10 h-10 bg-black/20 text-white rounded-full hidden" onclick="closeUserProfile()"><i class="fas fa-arrow-right"></i></button>
+                <div class="h-44 bg-[#006C48] relative">
                     <img src="https://images.unsplash.com/photo-1548013146-72479768b921?auto=format&fit=crop&w=800" class="w-full h-full object-cover opacity-30">
                 </div>
                 <div class="px-6 -mt-14 relative">
                     <img id="profile-avatar-large" src="" class="w-28 h-28 rounded-[2.5rem] bg-white border-4 border-[#006C48] shadow-2xl object-cover">
                     <div class="mt-4">
-                        <div class="flex items-center gap-2">
-                            <h2 id="profile-name" class="text-2xl font-black">--</h2>
-                            <i class="fas fa-check-circle text-blue-500 text-sm"></i>
-                        </div>
+                        <h2 id="profile-name" class="text-2xl font-black">--</h2>
                         <p id="profile-handle" class="text-[#D4AF37] font-bold text-sm">@--</p>
                     </div>
-                    <div class="flex gap-6 mt-6 pb-6 border-b border-gray-500/5">
-                        <div class="text-center"><span id="count-followers" class="block font-black text-lg">0</span><span class="text-[10px] opacity-40 font-black">متابِع</span></div>
-                        <div class="text-center"><span id="count-following" class="block font-black text-lg">0</span><span class="text-[10px] opacity-40 font-black">يتابعني</span></div>
-                    </div>
-                    <div id="profile-actions-box" class="mt-4 flex gap-2">
-                        <button id="logout-btn" onclick="handleLogout()" class="flex-1 bg-red-500/10 text-red-500 font-black py-3 rounded-2xl text-sm transition-all hover:bg-red-500 hover:text-white">تسجيل الخروج</button>
+                    <div id="profile-actions-box" class="mt-4">
+                        <button onclick="handleLogout()" class="w-full bg-red-500/10 text-red-500 font-black py-3 rounded-2xl text-sm">تسجيل الخروج</button>
                     </div>
                 </div>
                 <div id="user-posts-feed" class="mt-6 divide-y divide-gray-500/5"></div>
-            </section>
-
-            <!-- Other views placeholder -->
-            <section id="view-trends" class="view-content hidden p-6 scroll-spacer">
-                <h2 class="text-2xl font-black mb-6">المتداول الآن 🇸🇦</h2>
-                <div class="space-y-6" id="trends-container"></div>
-            </section>
-
-            <section id="view-live" class="view-content hidden p-6 scroll-spacer">
-                <h2 class="text-2xl font-black mb-8">بث مباشر</h2>
-                <div id="live-container" class="grid grid-cols-1 gap-6"></div>
             </section>
         </main>
 
@@ -254,14 +220,6 @@
             <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1.5 flex-1 transition-all">
                 <i class="fas fa-house-chimney text-xl"></i>
                 <span class="text-[9px] font-black">الرئيسية</span>
-            </button>
-            <button onclick="switchTab('trends')" id="nav-trends" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
-                <i class="fas fa-hashtag text-xl"></i>
-                <span class="text-[9px] font-black">الترند</span>
-            </button>
-            <button onclick="switchTab('live')" id="nav-live" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
-                <i class="fas fa-tower-broadcast text-xl"></i>
-                <span class="text-[9px] font-black">بث مباشر</span>
             </button>
             <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
                 <i class="fas fa-user-astronaut text-xl"></i>
@@ -283,17 +241,16 @@
         window.onload = () => initApp();
 
         async function initApp() {
-            // Check if user is already logged in
-            const { data: { session } } = await _supabase.auth.getSession();
+            // 1. Check if we have an active session (Handles Magic Link return)
+            const { data: { session }, error } = await _supabase.auth.getSession();
             
             if (session) {
-                // User is authenticated in Supabase
                 const localUser = localStorage.getItem('tuwaiq_user');
                 if (localUser) {
                     userSession = JSON.parse(localUser);
                     showMainApp();
                 } else {
-                    // Authenticated but no profile setup yet
+                    // Authenticated via email but profile is not setup yet
                     userSession = { 
                         id: session.user.id, 
                         email: session.user.email, 
@@ -303,15 +260,14 @@
                     document.getElementById('view-setup').classList.remove('hidden');
                 }
             } else {
-                // Not logged in
                 document.getElementById('view-login').classList.remove('hidden');
             }
 
-            // Listen for authentication changes (after returning from email)
             _supabase.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' && session) {
-                    // Page will reload to trigger initApp again with the session
-                    location.reload(); 
+                    console.log("Welcome! Logged in via email.");
+                    // After clicking link, the browser might need a refresh to sync everything
+                    if (!userSession) window.location.reload();
                 }
             });
         }
@@ -319,6 +275,7 @@
         async function handleGmailLogin() {
             const email = document.getElementById('login-email').value.trim();
             const btn = document.getElementById('btn-login-action');
+            const statusText = document.getElementById('login-status');
 
             if (!email || !email.includes('@')) return showToast("يرجى إدخال بريد إلكتروني صحيح 📧");
 
@@ -328,7 +285,6 @@
             const { error } = await _supabase.auth.signInWithOtp({
                 email: email,
                 options: {
-                    // Redirect back to this page
                     emailRedirectTo: window.location.origin
                 }
             });
@@ -338,9 +294,10 @@
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-envelope"></i> أرسل رابط الدخول';
             } else {
-                showToast("تم إرسال الرابط! تفقد بريدك الإلكتروني 📥");
-                btn.innerHTML = "تفقد بريدك ✅";
-                btn.classList.add('bg-gray-200');
+                showToast("تم إرسال الرابط بنجاح! تفقد بريدك الإلكتروني 📥");
+                btn.innerHTML = "تفقد بريدك الآن ✅";
+                statusText.innerHTML = "أرسلنا رابطاً خاصاً إلى " + email + ". اضغط عليه لتسجيل الدخول فوراً.";
+                statusText.classList.add('text-white', 'opacity-100');
             }
         }
 
@@ -350,9 +307,8 @@
             const age = document.getElementById('setup-age').value;
 
             if (!name || !username || !age) return showToast("يرجى إكمال جميع الحقول");
-            if (!/^[a-z0-9_]+$/.test(username)) return showToast("اليوزر يجب أن يكون حروف إنجليزية وأرقام فقط");
+            if (!/^[a-z0-9_]+$/.test(username)) return showToast("اليوزر يجب أن يكون إنجليزي، حروف صغيرة وأرقام فقط");
 
-            // Mocking a profile save (In a real app, you'd save this to a 'profiles' table)
             userSession.full_name = name;
             userSession.username = username;
             userSession.age = age;
@@ -369,8 +325,6 @@
             document.getElementById('user-avatar-mini').src = userSession.avatar_url;
             updateProfileView(userSession);
             loadPosts();
-            loadTrends();
-            loadLiveStreams();
         }
 
         async function loadPosts() {
@@ -381,26 +335,19 @@
         function renderPosts(posts, containerId) {
             const container = document.getElementById(containerId);
             if (!posts || posts.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center opacity-30 text-xs font-bold italic">لا توجد مشاركات حالياً..</div>`;
+                container.innerHTML = `<div class="p-20 text-center opacity-30 text-xs font-bold italic">لا توجد همم حالياً..</div>`;
                 return;
             }
             container.innerHTML = posts.map(post => `
-                <div class="p-5 hover:bg-gray-500/[0.02] transition-all border-b border-gray-500/5 animate-fade-in">
-                    <div class="flex gap-3 mb-4">
-                        <img onclick="viewUserProfile('${post.username}')" src="${post.author_avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tuwaiq'}" class="w-11 h-11 rounded-2xl bg-gray-100 shadow-sm border border-gray-500/5 object-cover cursor-pointer">
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <h4 class="font-black text-sm cursor-pointer" onclick="viewUserProfile('${post.username}')">${post.author_name} <i class="fas fa-check-circle text-blue-500 text-[10px]"></i></h4>
-                                <span class="text-[9px] opacity-40 font-bold">${formatTime(post.created_at)}</span>
-                            </div>
-                            <p class="text-[10px] text-[#006C48] font-bold">@${post.username || 'user'}</p>
+                <div class="p-5 border-b border-gray-500/5 animate-fade-in">
+                    <div class="flex gap-3 mb-3">
+                        <img src="${post.author_avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tuwaiq'}" class="w-10 h-10 rounded-xl bg-gray-100 object-cover">
+                        <div>
+                            <h4 class="font-black text-sm">${post.author_name}</h4>
+                            <p class="text-[10px] text-[#006C48] font-bold">@${post.username}</p>
                         </div>
                     </div>
-                    <p class="text-[15px] mb-4 leading-relaxed font-medium">${post.content}</p>
-                    <div class="flex gap-8 opacity-40 text-xs font-bold">
-                        <button onclick="handleLike('${post.id}')" class="flex items-center gap-2 hover:text-red-500 transition-colors"><i class="far fa-heart"></i><span>${post.likes || 0}</span></button>
-                        <button onclick="handleRetweet('${post.id}')" class="flex items-center gap-2 hover:text-[#006C48] transition-colors"><i class="fas fa-retweet"></i><span>إعادة نشر</span></button>
-                    </div>
+                    <p class="text-[14px] leading-relaxed">${post.content}</p>
                 </div>
             `).join('');
         }
@@ -410,33 +357,16 @@
             const content = input.value.trim();
             if (!content) return;
             const { error } = await _supabase.from('posts').insert([{ 
-                content: content, 
-                author_name: userSession.full_name, 
-                author_avatar: userSession.avatar_url, 
-                username: userSession.username, 
-                likes: 0 
+                content: content, author_name: userSession.full_name, author_avatar: userSession.avatar_url, username: userSession.username, likes: 0 
             }]);
-            if (!error) { input.value = ""; input.style.height = "auto"; loadPosts(); showToast("تم النشر بنجاح 🇸🇦"); }
+            if (!error) { input.value = ""; loadPosts(); showToast("تم النشر بنجاح 🇸🇦"); }
         }
 
-        async function handleLike(postId) {
-            const post = allPosts.find(p => p.id === postId);
-            if (!post) return;
-            const { error } = await _supabase.from('posts').update({ likes: (post.likes || 0) + 1 }).eq('id', postId);
-            if (!error) { loadPosts(); showToast("تم الإعجاب ❤️"); }
-        }
-
-        async function handleRetweet(postId) {
-            const post = allPosts.find(p => p.id === postId);
-            if (!post) return;
-            const { error } = await _supabase.from('posts').insert([{ 
-                content: `إعادة نشر من @${post.username}: ${post.content}`, 
-                author_name: userSession.full_name, 
-                author_avatar: userSession.avatar_url, 
-                username: userSession.username, 
-                likes: 0 
-            }]);
-            if (!error) { loadPosts(); showToast("تمت إعادة النشر 🔁"); }
+        function switchTab(tab) {
+            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById(`nav-${tab}`).classList.add('nav-active');
         }
 
         function updateProfileView(user) {
@@ -445,54 +375,10 @@
             document.getElementById('profile-handle').innerText = `@${user.username}`;
         }
 
-        function switchTab(tab) {
-            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
-            const targetNav = document.getElementById(`nav-${tab}`);
-            if (targetNav) targetNav.classList.add('nav-active');
-            if (tab === 'profile') { viewUserProfile(userSession.username); }
-            document.querySelector('main').scrollTop = 0;
-        }
-
-        function viewUserProfile(username) {
-            const userPosts = allPosts.filter(p => p.username === username);
-            renderPosts(userPosts, 'user-posts-feed');
-            
-            if (username !== userSession.username) {
-                document.getElementById('back-to-feed').classList.remove('hidden');
-                document.getElementById('logout-btn').classList.add('hidden');
-                const post = allPosts.find(p => p.username === username);
-                if(post) {
-                    document.getElementById('profile-avatar-large').src = post.author_avatar;
-                    document.getElementById('profile-name').innerText = post.author_name;
-                    document.getElementById('profile-handle').innerText = `@${post.username}`;
-                }
-            } else {
-                document.getElementById('back-to-feed').classList.add('hidden');
-                document.getElementById('logout-btn').classList.remove('hidden');
-                updateProfileView(userSession);
-            }
-        }
-
-        function closeUserProfile() { switchTab('home'); }
-
         async function handleLogout() {
             await _supabase.auth.signOut();
             localStorage.removeItem('tuwaiq_user');
             window.location.reload();
-        }
-
-        function handleSearch(query) {
-            const q = query.toLowerCase().trim();
-            if (!q) { renderPosts(allPosts, 'main-feed'); return; }
-            const filtered = allPosts.filter(post => (post.content && post.content.toLowerCase().includes(q)) || (post.username && post.username.toLowerCase().includes(q)));
-            renderPosts(filtered, 'main-feed');
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            document.getElementById('theme-icon').className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
         }
 
         function showToast(msg) {
@@ -503,36 +389,17 @@
             setTimeout(() => { t.style.opacity = '0'; t.style.transition = '0.5s'; setTimeout(() => t.remove(), 500); }, 2500);
         }
 
-        function formatTime(dateStr) {
-            const diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
-            if (diff < 60) return "الآن";
-            if (diff < 3600) return `${Math.floor(diff/60)}د`;
-            if (diff < 86400) return `${Math.floor(diff/3600)}س`;
-            return "يوم";
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            icon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
         }
 
-        function uploadStory(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const div = document.createElement('div');
-                    div.className = "flex flex-col items-center gap-1 min-w-[70px] animate-fade-in";
-                    div.innerHTML = `<div class="w-16 h-16 rounded-2xl border-2 border-[#D4AF37] p-0.5 shadow-sm transform hover:scale-105 transition"><img src="${e.target.result}" class="w-full h-full rounded-2xl object-cover"></div><span class="text-[9px] font-bold opacity-60">الآن</span>`;
-                    document.getElementById('stories-list').prepend(div);
-                    showToast("تم رفع القصة ✨");
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function loadTrends() {
-            const trends = [{ tag: "#رؤية_السعودية_2030", count: "1.2M", cat: "سياسة" }, { tag: "#طويق_التقني", count: "850K", cat: "تقنية" }, { tag: "#نيوم", count: "500K", cat: "مشاريع" }];
-            document.getElementById('trends-container').innerHTML = trends.map(t => `<div class="p-4 bg-gray-500/[0.03] rounded-2xl border-r-4 border-[#006C48] hover:bg-gray-500/[0.06] transition cursor-pointer"><span class="text-[10px] text-[#006C48] font-black uppercase">${t.cat}</span><h3 class="text-lg font-black mt-1">${t.tag}</h3><p class="text-[10px] opacity-40 font-bold">${t.count} تغريدة</p></div>`).join('');
-        }
-
-        function loadLiveStreams() {
-            const streams = [{ title: "دورة الذكاء الاصطناعي", user: "م. سارة", img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4" }];
-            document.getElementById('live-container').innerHTML = streams.map(s => `<div class="relative h-48 rounded-3xl overflow-hidden shadow-lg group cursor-pointer"><img src="${s.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute bottom-3 right-3 left-3"><h4 class="text-white font-black text-sm">${s.title}</h4><p class="text-white/60 text-[10px]">${s.user}</p></div></div>`).join('');
+        function handleSearch(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) { renderPosts(allPosts, 'main-feed'); return; }
+            const filtered = allPosts.filter(p => p.content.toLowerCase().includes(q) || p.author_name.toLowerCase().includes(q));
+            renderPosts(filtered, 'main-feed');
         }
     </script>
 </body>
