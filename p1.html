@@ -99,6 +99,7 @@
 </head>
 <body>
 
+    <!-- تم تعديل واجهة الدخول لتدعم الإيميل -->
     <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
         <div class="mb-10 text-white">
             <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6">
@@ -107,12 +108,20 @@
             <h1 class="text-3xl font-black mb-2">منصة طويق</h1>
             <p class="text-white/70 font-medium italic">همة تعانق السماء 🇸🇦</p>
         </div>
-        <button onclick="handleLogin()" class="w-full max-w-xs bg-white text-gray-900 font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-4 shadow-xl hover:scale-105 transition-transform active:scale-95">
-            <img src="https://www.google.com/favicon.ico" class="w-6 h-6">
-            تسجيل الدخول عبر جوجل
-        </button>
+        
+        <div class="w-full max-w-xs space-y-4">
+            <input type="email" id="login-email" placeholder="بريدك الإلكتروني (Gmail)" 
+                class="w-full p-4 rounded-2xl text-center text-gray-900 font-bold outline-none border-2 border-transparent focus:border-[#D4AF37] transition-all shadow-lg">
+            
+            <button onclick="handleGmailLogin()" id="btn-login-action" class="w-full bg-white text-[#006C48] font-black py-4 px-6 rounded-2xl shadow-xl hover:scale-105 transition-transform active:scale-95 flex items-center justify-center gap-3">
+                <i class="fas fa-envelope"></i>
+                أرسل رابط الدخول
+            </button>
+            <p class="text-white/50 text-[10px]">سيصلك رابط تسجيل دخول مباشر على بريدك</p>
+        </div>
     </div>
 
+    <!-- باقي الواجهات (Setup, App) تبقى كما هي -->
     <div id="view-setup" class="fixed inset-0 z-[998] bg-white flex flex-col p-8 hidden overflow-y-auto text-gray-900">
         <h2 class="text-2xl font-black mb-2">إكمال ملفك الشخصي</h2>
         <p class="text-gray-400 text-sm mb-8">لنتمكن من تخصيص تجربتك في طويق</p>
@@ -197,6 +206,7 @@
                 <div id="main-feed" class="divide-y divide-gray-500/5 scroll-spacer"></div>
             </section>
 
+            <!-- باقي الأقسام Trend, Live, Profile تبقى كما هي -->
             <section id="view-profile" class="view-content hidden scroll-spacer">
                 <div class="h-44 bg-gradient-to-br from-[#006C48] to-[#004d33] relative">
                     <button id="back-to-feed" class="absolute top-4 right-4 z-10 w-10 h-10 bg-black/20 text-white rounded-full hidden" onclick="closeUserProfile()"><i class="fas fa-arrow-right"></i></button>
@@ -212,8 +222,8 @@
                         <p id="profile-handle" class="text-[#D4AF37] font-bold text-sm">@--</p>
                     </div>
                     <div class="flex gap-6 mt-6 pb-6 border-b border-gray-500/5">
-                        <div class="text-center"><span id="count-followers" class="block font-black text-lg">850</span><span class="text-[10px] opacity-40 font-black">متابِع</span></div>
-                        <div class="text-center"><span id="count-following" class="block font-black text-lg">1.2K</span><span class="text-[10px] opacity-40 font-black">يتابعني</span></div>
+                        <div class="text-center"><span id="count-followers" class="block font-black text-lg">0</span><span class="text-[10px] opacity-40 font-black">متابِع</span></div>
+                        <div class="text-center"><span id="count-following" class="block font-black text-lg">0</span><span class="text-[10px] opacity-40 font-black">يتابعني</span></div>
                     </div>
                     <div id="profile-actions-box" class="mt-4 flex gap-2">
                         <button id="logout-btn" onclick="handleLogout()" class="flex-1 bg-red-500/10 text-red-500 font-black py-3 rounded-2xl text-sm transition-all hover:bg-red-500 hover:text-white">تسجيل الخروج</button>
@@ -272,26 +282,57 @@
         window.onload = () => initApp();
 
         async function initApp() {
-            const localUser = localStorage.getItem('tuwaiq_user');
-            if (localUser) {
-                userSession = JSON.parse(localUser);
-                showMainApp();
+            // التحقق من وجود جلسة نشطة من Supabase
+            const { data: { session } } = await _supabase.auth.getSession();
+            
+            if (session) {
+                const localUser = localStorage.getItem('tuwaiq_user');
+                if (localUser) {
+                    userSession = JSON.parse(localUser);
+                    showMainApp();
+                } else {
+                    // إذا مسجل دخول بالسابابيس بس ما كمل البروفايل
+                    userSession = { id: session.user.id, email: session.user.email, avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}` };
+                    document.getElementById('view-login').classList.add('hidden');
+                    document.getElementById('view-setup').classList.remove('hidden');
+                }
             } else {
                 document.getElementById('view-login').classList.remove('hidden');
             }
+
+            // مراقبة تغيير حالة الدخول (مثلاً بعد الضغط على رابط الإيميل)
+            _supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    location.reload(); 
+                }
+            });
         }
 
-        async function handleLogin() {
-            const tempUser = {
-                id: 'user_' + Math.random().toString(36).substr(2, 9),
-                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
-                full_name: '',
-                username: '',
-                age: ''
-            };
-            userSession = tempUser;
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-setup').classList.remove('hidden');
+        // دالة تسجيل الدخول عبر الإيميل
+        async function handleGmailLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const btn = document.getElementById('btn-login-action');
+
+            if (!email || !email.includes('@')) return showToast("يرجى إدخل بريد إلكتروني صحيح 📧");
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> جاري الإرسال...';
+
+            const { error } = await _supabase.auth.signInWithOtp({
+                email: email,
+                options: {
+                    emailRedirectTo: window.location.origin
+                }
+            });
+
+            if (error) {
+                showToast("خطأ: " + error.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-envelope"></i> أرسل رابط الدخول';
+            } else {
+                showToast("تم إرسال رابط الدخول لبريدك! 📥");
+                btn.innerHTML = "تفقد بريدك ✅";
+            }
         }
 
         async function completeProfile() {
@@ -302,16 +343,8 @@
             if (!name || !username || !age) return showToast("يرجى إكمال جميع الحقول");
             if (!/^[a-z0-9_]+$/.test(username)) return showToast("اليوزر يجب أن يكون إنجليزي، حروف صغيرة وأرقام فقط");
 
-            // فحص التوافر في قاعدة البيانات
-            const { data, error } = await _supabase
-                .from('posts')
-                .select('username')
-                .eq('username', username)
-                .limit(1);
-
-            if (data && data.length > 0) {
-                return showToast("عذراً، هذا اليوزر محجوز مسبقاً ❌");
-            }
+            const { data, error } = await _supabase.from('posts').select('username').eq('username', username).limit(1);
+            if (data && data.length > 0) return showToast("عذراً، هذا اليوزر محجوز مسبقاً ❌");
 
             userSession.full_name = name;
             userSession.username = username;
@@ -326,25 +359,16 @@
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-setup').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-            
             document.getElementById('user-avatar-mini').src = userSession.avatar_url;
             updateProfileView(userSession);
-            
             loadPosts();
             loadTrends();
             loadLiveStreams();
         }
 
         async function loadPosts() {
-            const { data, error } = await _supabase
-                .from('posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (!error) {
-                allPosts = data;
-                renderPosts(data, 'main-feed');
-            }
+            const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
+            if (!error) { allPosts = data; renderPosts(data, 'main-feed'); }
         }
 
         function renderPosts(posts, containerId) {
@@ -353,7 +377,6 @@
                 container.innerHTML = `<div class="p-20 text-center opacity-30 text-xs font-bold italic">لا توجد همم حالياً..</div>`;
                 return;
             }
-
             container.innerHTML = posts.map(post => `
                 <div class="p-5 hover:bg-gray-500/[0.02] transition-all border-b border-gray-500/5 group">
                     <div class="flex gap-3 mb-4">
@@ -389,77 +412,33 @@
             const input = document.getElementById('post-input');
             const content = input.value.trim();
             if (!content) return;
-
-            const { error } = await _supabase.from('posts').insert([{
-                content: content,
-                author_name: userSession.full_name,
-                author_avatar: userSession.avatar_url,
-                username: userSession.username,
-                likes: 0
-            }]);
-
-            if (!error) {
-                input.value = "";
-                input.style.height = "auto";
-                loadPosts();
-                showToast("تم نشر همّتك بنجاح 🇸🇦");
-            }
+            const { error } = await _supabase.from('posts').insert([{ content: content, author_name: userSession.full_name, author_avatar: userSession.avatar_url, username: userSession.username, likes: 0 }]);
+            if (!error) { input.value = ""; input.style.height = "auto"; loadPosts(); showToast("تم نشر همّتك بنجاح 🇸🇦"); }
         }
 
         async function handleLike(postId) {
             const post = allPosts.find(p => p.id === postId);
             if (!post) return;
-
-            const { error } = await _supabase
-                .from('posts')
-                .update({ likes: (post.likes || 0) + 1 })
-                .eq('id', postId);
-
-            if (!error) {
-                loadPosts();
-                showToast("تم الإعجاب بالهمّة ❤️");
-            }
+            const { error } = await _supabase.from('posts').update({ likes: (post.likes || 0) + 1 }).eq('id', postId);
+            if (!error) { loadPosts(); showToast("تم الإعجاب بالهمّة ❤️"); }
         }
 
         async function handleRetweet(postId) {
             const post = allPosts.find(p => p.id === postId);
             if (!post) return;
-
-            const { error } = await _supabase.from('posts').insert([{
-                content: `إعادة نشر من @${post.username}: ${post.content}`,
-                author_name: userSession.full_name,
-                author_avatar: userSession.avatar_url,
-                username: userSession.username,
-                likes: 0
-            }]);
-
-            if (!error) {
-                loadPosts();
-                showToast("تمت إعادة النشر بنجاح 🔁");
-            }
+            const { error } = await _supabase.from('posts').insert([{ content: `إعادة نشر من @${post.username}: ${post.content}`, author_name: userSession.full_name, author_avatar: userSession.avatar_url, username: userSession.username, likes: 0 }]);
+            if (!error) { loadPosts(); showToast("تمت إعادة النشر بنجاح 🔁"); }
         }
 
         function viewUserProfile(username) {
             const post = allPosts.find(p => p.username === username);
-            const userToView = post ? {
-                full_name: post.author_name,
-                username: post.username,
-                avatar_url: post.author_avatar
-            } : null;
-
+            const userToView = post ? { full_name: post.author_name, username: post.username, avatar_url: post.author_avatar } : null;
             if (userToView) {
                 updateProfileView(userToView);
                 const userPosts = allPosts.filter(p => p.username === username);
                 renderPosts(userPosts, 'user-posts-feed');
-                
-                if (username !== userSession.username) {
-                    document.getElementById('back-to-feed').classList.remove('hidden');
-                    document.getElementById('logout-btn').classList.add('hidden');
-                } else {
-                    document.getElementById('back-to-feed').classList.add('hidden');
-                    document.getElementById('logout-btn').classList.remove('hidden');
-                }
-                
+                if (username !== userSession.username) { document.getElementById('back-to-feed').classList.remove('hidden'); document.getElementById('logout-btn').classList.add('hidden'); }
+                else { document.getElementById('back-to-feed').classList.add('hidden'); document.getElementById('logout-btn').classList.remove('hidden'); }
                 switchTab('profile');
             }
         }
@@ -468,15 +447,9 @@
             document.getElementById('profile-avatar-large').src = user.avatar_url;
             document.getElementById('profile-name').innerText = user.full_name;
             document.getElementById('profile-handle').innerText = `@${user.username}`;
-            document.getElementById('count-followers').innerText = Math.floor(Math.random() * 2000) + 100;
-            document.getElementById('count-following').innerText = Math.floor(Math.random() * 1000) + 50;
         }
 
-        function closeUserProfile() {
-            document.getElementById('back-to-feed').classList.add('hidden');
-            updateProfileView(userSession);
-            switchTab('home');
-        }
+        function closeUserProfile() { document.getElementById('back-to-feed').classList.add('hidden'); updateProfileView(userSession); switchTab('home'); }
 
         function switchTab(tab) {
             document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
@@ -484,21 +457,14 @@
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
             const targetNav = document.getElementById(`nav-${tab}`);
             if (targetNav) targetNav.classList.add('nav-active');
-            
-            if (tab === 'profile' && document.getElementById('back-to-feed').classList.contains('hidden')) {
-                viewUserProfile(userSession.username);
-            }
+            if (tab === 'profile' && document.getElementById('back-to-feed').classList.contains('hidden')) { viewUserProfile(userSession.username); }
             document.querySelector('main').scrollTop = 0;
         }
 
         function handleSearch(query) {
             const q = query.toLowerCase().trim();
             if (!q) { renderPosts(allPosts, 'main-feed'); return; }
-            const filtered = allPosts.filter(post => 
-                (post.content && post.content.toLowerCase().includes(q)) || 
-                (post.author_name && post.author_name.toLowerCase().includes(q)) ||
-                (post.username && post.username.toLowerCase().includes(q))
-            );
+            const filtered = allPosts.filter(post => (post.content && post.content.toLowerCase().includes(q)) || (post.author_name && post.author_name.toLowerCase().includes(q)) || (post.username && post.username.toLowerCase().includes(q)));
             renderPosts(filtered, 'main-feed');
         }
 
@@ -513,11 +479,7 @@
             t.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-6 py-3 rounded-2xl text-sm font-black shadow-2xl z-[2000] animate-bounce";
             t.innerText = msg;
             document.body.appendChild(t);
-            setTimeout(() => {
-                t.style.opacity = '0';
-                t.style.transition = 'opacity 0.5s';
-                setTimeout(() => t.remove(), 500);
-            }, 2500);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.5s'; setTimeout(() => t.remove(), 500); }, 2500);
         }
 
         function formatTime(dateStr) {
@@ -528,7 +490,8 @@
             return "يوم";
         }
 
-        function handleLogout() {
+        async function handleLogout() {
+            await _supabase.auth.signOut();
             localStorage.removeItem('tuwaiq_user');
             window.location.reload();
         }
@@ -539,13 +502,8 @@
                 reader.onload = e => {
                     const storyList = document.getElementById('stories-list');
                     const div = document.createElement('div');
-                    div.className = "flex flex-col items-center gap-1 min-w-[70px] animate-fade-in";
-                    div.innerHTML = `
-                        <div class="w-16 h-16 rounded-2xl border-2 border-[#D4AF37] p-0.5 shadow-sm transform hover:scale-105 transition">
-                            <img src="${e.target.result}" class="w-full h-full rounded-2xl object-cover">
-                        </div>
-                        <span class="text-[9px] font-bold opacity-60">الآن</span>
-                    `;
+                    div.className = "flex flex-col items-center gap-1 min-w-[70px]";
+                    div.innerHTML = `<div class="w-16 h-16 rounded-2xl border-2 border-[#D4AF37] p-0.5 shadow-sm transform hover:scale-105 transition"><img src="${e.target.result}" class="w-full h-full rounded-2xl object-cover"></div><span class="text-[9px] font-bold opacity-60">الآن</span>`;
                     storyList.prepend(div);
                     showToast("تم رفع قصتك بنجاح ✨");
                 };
@@ -554,39 +512,13 @@
         }
 
         function loadTrends() {
-            const trends = [
-                { id: 1, tag: "#رؤية_السعودية_2030", count: "1.2M", category: "سياسة" },
-                { id: 2, tag: "#طويق_التقني", count: "850K", category: "تقنية" },
-                { id: 3, tag: "#نيوم", count: "500K", category: "مشاريع" },
-                { id: 5, tag: "#يوم_التأسيس", count: "2.5M", category: "وطني" }
-            ];
-            document.getElementById('trends-container').innerHTML = trends.map(t => `
-                <div class="p-4 bg-gray-500/[0.03] rounded-2xl border-r-4 border-[#006C48] hover:bg-gray-500/[0.06] transition cursor-pointer">
-                    <span class="text-[10px] text-[#006C48] font-black uppercase tracking-wider">${t.category}</span>
-                    <h3 class="text-lg font-black mt-1">${t.tag}</h3>
-                    <p class="text-[10px] opacity-40 font-bold">${t.count} تغريدة</p>
-                </div>
-            `).join('');
+            const trends = [{ id: 1, tag: "#رؤية_السعودية_2030", count: "1.2M", category: "سياسة" }, { id: 2, tag: "#طويق_التقني", count: "850K", category: "تقنية" }, { id: 3, tag: "#نيوم", count: "500K", category: "مشاريع" }, { id: 5, tag: "#يوم_التأسيس", count: "2.5M", category: "وطني" }];
+            document.getElementById('trends-container').innerHTML = trends.map(t => `<div class="p-4 bg-gray-500/[0.03] rounded-2xl border-r-4 border-[#006C48] hover:bg-gray-500/[0.06] transition cursor-pointer"><span class="text-[10px] text-[#006C48] font-black uppercase tracking-wider">${t.category}</span><h3 class="text-lg font-black mt-1">${t.tag}</h3><p class="text-[10px] opacity-40 font-bold">${t.count} تغريدة</p></div>`).join('');
         }
 
         function loadLiveStreams() {
-            const streams = [
-                { id: 1, title: "دورة الذكاء الاصطناعي", user: "م. سارة", viewers: "2.4K", img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4" },
-                { id: 2, title: "الرياض في الليل 🌃", user: "سعود", viewers: "1.1K", img: "https://images.unsplash.com/photo-1548013146-72479768b921" }
-            ];
-            document.getElementById('live-container').innerHTML = streams.map(s => `
-                <div class="relative h-48 rounded-3xl overflow-hidden shadow-lg group cursor-pointer">
-                    <img src="${s.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                    <div class="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xl">
-                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> مباشر
-                    </div>
-                    <div class="absolute bottom-3 right-3 left-3">
-                        <h4 class="text-white font-black text-sm">${s.title}</h4>
-                        <p class="text-white/60 text-[10px]">${s.user} • ${s.viewers} مشاهد</p>
-                    </div>
-                </div>
-            `).join('');
+            const streams = [{ id: 1, title: "دورة الذكاء الاصطناعي", user: "م. سارة", viewers: "2.4K", img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4" }, { id: 2, title: "الرياض في الليل 🌃", user: "سعود", viewers: "1.1K", img: "https://images.unsplash.com/photo-1548013146-72479768b921" }];
+            document.getElementById('live-container').innerHTML = streams.map(s => `<div class="relative h-48 rounded-3xl overflow-hidden shadow-lg group cursor-pointer"><img src="${s.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div><div class="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xl"><span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> مباشر </div><div class="absolute bottom-3 right-3 left-3"><h4 class="text-white font-black text-sm">${s.title}</h4><p class="text-white/60 text-[10px]">${s.user} • ${s.viewers} مشاهد</p></div></div>`).join('');
         }
     </script>
 </body>
