@@ -113,6 +113,15 @@
             background: var(--saudi-green);
             z-index: 2000;
         }
+        
+        .local-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -161,7 +170,10 @@
                 <div class="w-8 h-8 bg-[#006C48] rounded-lg flex items-center justify-center">
                     <i class="fas fa-mountain text-white text-xs"></i>
                 </div>
-                <h1 class="text-lg font-black">طويق</h1>
+                <div>
+                    <h1 class="text-lg font-black leading-none">طويق</h1>
+                    <span id="connection-status" class="text-[8px] font-bold"></span>
+                </div>
             </div>
             <button onclick="toggleDarkMode()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                 <i id="theme-icon" class="fas fa-moon text-gray-600"></i>
@@ -260,36 +272,36 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // إعدادات افتراضية لمنع التعليق عند التشغيل المحلي
         const defaultAppId = 'tuwaiq-platform-local';
         const dummyConfig = { apiKey: "fake-key", authDomain: "local", projectId: "local" };
         
         const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : dummyConfig;
         const appId = typeof __app_id !== 'undefined' ? __app_id : defaultAppId;
-
-        // التحقق من وجود إعدادات حقيقية
         const isLocal = config.apiKey === "fake-key";
 
         let app, auth, db;
-        
-        if (!isLocal) {
-            app = initializeApp(config);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        }
-
         let userProfile = null;
         let isRegister = false;
 
         const init = async () => {
+            const statusEl = document.getElementById('connection-status');
+            
             if (isLocal) {
-                // إذا كان التشغيل محلياً بدون إعدادات Firebase، نظهر شاشة الدخول مباشرة
+                statusEl.innerText = "الوضع التجريبي (محلي)";
+                statusEl.className = "text-[8px] font-bold text-orange-500";
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('view-auth').classList.remove('hidden');
                 return;
             }
 
             try {
+                app = initializeApp(config);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                statusEl.innerText = "متصل بقاعدة البيانات";
+                statusEl.className = "text-[8px] font-bold text-green-600";
+
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -312,7 +324,6 @@
                 });
             } catch (e) {
                 console.error("Firebase Init Error:", e);
-                // منع التعليق في حال فشل الاتصال
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('view-auth').classList.remove('hidden');
             }
@@ -338,9 +349,14 @@
             }
 
             if (isLocal) {
-                // محاكاة دخول محلي بدون قاعدة بيانات
-                userProfile = { username, full_name: fullName || username, avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}` };
+                userProfile = { 
+                    username, 
+                    full_name: fullName || username, 
+                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+                    uid: 'local-user'
+                };
                 showApp();
+                showToast("دخلت بالوضع التجريبي المحلي");
                 return;
             }
 
@@ -388,7 +404,15 @@
             document.getElementById('p-name').innerText = userProfile.full_name;
             document.getElementById('p-username').innerText = `@${userProfile.username}`;
             
-            if (!isLocal) listenToPosts();
+            if (!isLocal) {
+                listenToPosts();
+            } else {
+                // بيانات وهمية للوضع المحلي
+                const dummyPosts = [
+                    { id: 1, author_name: "تجريبي", username: "demo", author_avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1", content: "هذا منشور تجريبي في الوضع المحلي #طويق", uid: "local" }
+                ];
+                renderFeed(dummyPosts);
+            }
         };
 
         const listenToPosts = () => {
@@ -407,7 +431,7 @@
             if (!text) return;
 
             if (isLocal) {
-                showToast("خاصية النشر تتطلب اتصال Firebase حقيقي");
+                showToast("هذه الميزة تعمل فقط عند رفع الكود للمنصة");
                 return;
             }
 
