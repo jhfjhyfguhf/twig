@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>منصة طويق | Tuwaiq Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
@@ -62,7 +61,7 @@
         .post-card {
             border-bottom: 1px solid rgba(0,0,0,0.05);
             padding: 15px;
-            transition: background 0.2s;
+            background: var(--card-bg);
         }
 
         .btn-primary {
@@ -72,19 +71,26 @@
             padding: 12px;
             border-radius: 15px;
             width: 100%;
-            transition: transform 0.2s;
+            transition: all 0.2s;
         }
 
         .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 
         .input-field {
             background: rgba(128,128,128,0.1);
-            border: none;
+            border: 1px solid transparent;
             border-radius: 12px;
             padding: 12px;
             width: 100%;
             margin-bottom: 10px;
             outline: none;
+            transition: all 0.2s;
+        }
+        
+        .input-field:focus {
+            border-color: var(--saudi-green);
+            background: white;
         }
 
         .live-badge {
@@ -102,12 +108,25 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+
+        #loading-screen {
+            background: var(--saudi-green);
+            z-index: 2000;
+        }
     </style>
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loading-screen" class="fixed inset-0 flex items-center justify-center text-white">
+        <div class="text-center">
+            <i class="fas fa-mountain text-5xl animate-bounce mb-4"></i>
+            <p class="font-bold tracking-widest">جاري التحميل...</p>
+        </div>
+    </div>
+
     <!-- Auth View -->
-    <div id="view-auth" class="fixed inset-0 z-[1000] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
+    <div id="view-auth" class="fixed inset-0 z-[1000] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center hidden">
         <div class="mb-8 text-white">
             <i class="fas fa-mountain text-6xl mb-4"></i>
             <h1 class="text-3xl font-black">منصة طويق</h1>
@@ -121,10 +140,13 @@
                 <input type="text" id="auth-name" placeholder="الاسم الكامل" class="input-field text-gray-900">
             </div>
             
-            <input type="text" id="auth-username" placeholder="اسم المستخدم" class="input-field text-gray-900">
+            <input type="text" id="auth-username" placeholder="اسم المستخدم (بالإنجليزي)" class="input-field text-gray-900">
             <input type="password" id="auth-password" placeholder="كلمة المرور" class="input-field text-gray-900">
             
-            <button onclick="handleAuth()" id="auth-btn" class="btn-primary mt-4">دخول</button>
+            <button onclick="handleAuth()" id="auth-btn" class="btn-primary mt-4 flex justify-center items-center gap-2">
+                <span id="btn-text">دخول</span>
+                <i id="btn-loader" class="fas fa-circle-notch fa-spin hidden"></i>
+            </button>
             
             <p class="text-xs text-gray-500 text-center mt-4 cursor-pointer" onclick="toggleAuthMode()">
                 <span id="auth-switch-text">ليس لديك حساب؟ سجل الآن</span>
@@ -147,13 +169,12 @@
         </header>
 
         <main id="main-scroll" class="no-scrollbar">
-            <!-- الرئيسية / المحادثات -->
             <section id="view-home" class="view-content">
                 <div class="p-4 bg-white border-b sticky top-0 z-10">
                     <div class="flex gap-3">
-                        <img id="my-avatar-mini" src="" class="w-10 h-10 rounded-full bg-gray-200">
+                        <img id="my-avatar-mini" src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" class="w-10 h-10 rounded-full bg-gray-200 object-cover">
                         <div class="flex-1">
-                            <textarea id="post-text" placeholder="ما هي همتك اليوم؟" class="w-full border-none focus:ring-0 resize-none h-12 text-sm pt-2" maxlength="280"></textarea>
+                            <textarea id="post-text" placeholder="ما هي همتك اليوم؟" class="w-full border-none focus:ring-0 resize-none h-12 text-sm pt-2 bg-transparent outline-none" maxlength="280"></textarea>
                             <div class="flex justify-between items-center mt-2">
                                 <span class="text-[10px] text-gray-400">استخدم #هاشتاق لرفع الترند</span>
                                 <button onclick="createPost()" class="bg-[#006C48] text-white px-5 py-1.5 rounded-full text-xs font-bold">نشر</button>
@@ -164,11 +185,9 @@
                 <div id="feed-container"></div>
             </section>
 
-            <!-- البثوث -->
             <section id="view-live" class="view-content hidden p-4">
                 <h2 class="text-xl font-black mb-4">البثوث المباشرة</h2>
                 <div id="live-list" class="grid grid-cols-1 gap-4">
-                    <!-- بثوث وهمية للعرض -->
                     <div class="relative h-48 rounded-2xl overflow-hidden bg-gray-300">
                         <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=400" class="w-full h-full object-cover">
                         <div class="absolute top-3 left-3 live-badge">مباشر</div>
@@ -180,18 +199,16 @@
                 </div>
             </section>
 
-            <!-- الترند -->
             <section id="view-trends" class="view-content hidden p-6">
                 <h2 class="text-xl font-black mb-6">الأكثر تداولاً 🇸🇦</h2>
                 <div id="trends-list" class="space-y-4"></div>
             </section>
 
-            <!-- الملف الشخصي (Tiktok Style) -->
             <section id="view-profile" class="view-content hidden">
                 <div class="flex flex-col items-center pt-8 pb-4">
                     <div class="relative">
-                        <img id="p-avatar" src="" class="w-24 h-24 rounded-full border-4 border-white shadow-xl bg-gray-200 object-cover">
-                        <button class="absolute bottom-0 right-0 bg-[#006C48] text-white w-7 h-7 rounded-full border-2 border-white text-[10px]"><i class="fas fa-plus"></i></button>
+                        <img id="p-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" class="w-24 h-24 rounded-full border-4 border-white shadow-xl bg-gray-200 object-cover">
+                        <button class="absolute bottom-0 right-0 bg-[#006C48] text-white w-7 h-7 rounded-full border-2 border-white text-[10px]"><i class="fas fa-camera"></i></button>
                     </div>
                     <h3 id="p-name" class="mt-4 text-xl font-black">--</h3>
                     <p id="p-username" class="text-gray-400 text-sm font-bold">@--</p>
@@ -199,7 +216,7 @@
                     <div class="flex gap-8 mt-6">
                         <div class="text-center"><p class="font-black">1.2K</p><p class="text-[10px] text-gray-400">متابعة</p></div>
                         <div class="text-center"><p class="font-black">850</p><p class="text-[10px] text-gray-400">متابعين</p></div>
-                        <div class="text-center"><p class="font-black">5.4K</p><p class="text-[10px] text-gray-400">تسجيلات إعجاب</p></div>
+                        <div class="text-center"><p class="font-black">5.4K</p><p class="text-[10px] text-gray-400">إعجاب</p></div>
                     </div>
 
                     <div class="flex gap-2 mt-6 w-full px-10">
@@ -218,7 +235,6 @@
             </section>
         </main>
 
-        <!-- Navigation -->
         <nav class="shrink-0 bg-white border-t flex justify-around items-center h-20 z-[100]">
             <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1">
                 <i class="fas fa-home text-xl"></i>
@@ -239,219 +255,253 @@
         </nav>
     </div>
 
-    <script>
-        // Config
-        const SUPABASE_URL = 'https://cuaoopauabnmpmoddvby.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW9vcGF1YWJubXBtb2RkdmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjgyNDUsImV4cCI6MjA5MzIwNDI0NX0._vyBPMk3oaJqMJaBRY4DaKj2ZjSodKPxZ77kFiZUH9o';
-        const { createClient } = supabase;
-        const _db = createClient(SUPABASE_URL, SUPABASE_KEY);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let currentUser = null;
+        // إعدادات افتراضية لمنع التعليق عند التشغيل المحلي
+        const defaultAppId = 'tuwaiq-platform-local';
+        const dummyConfig = { apiKey: "fake-key", authDomain: "local", projectId: "local" };
+        
+        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : dummyConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : defaultAppId;
+
+        // التحقق من وجود إعدادات حقيقية
+        const isLocal = config.apiKey === "fake-key";
+
+        let app, auth, db;
+        
+        if (!isLocal) {
+            app = initializeApp(config);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        }
+
+        let userProfile = null;
         let isRegister = false;
-        let allPosts = [];
 
-        window.onload = () => {
-            const saved = localStorage.getItem('tuwaiq_logged_user');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                startApp();
+        const init = async () => {
+            if (isLocal) {
+                // إذا كان التشغيل محلياً بدون إعدادات Firebase، نظهر شاشة الدخول مباشرة
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('view-auth').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
+                        const profileSnap = await getDoc(profileRef);
+                        
+                        if (profileSnap.exists()) {
+                            userProfile = profileSnap.data();
+                            showApp();
+                        } else {
+                            document.getElementById('loading-screen').classList.add('hidden');
+                            document.getElementById('view-auth').classList.remove('hidden');
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Firebase Init Error:", e);
+                // منع التعليق في حال فشل الاتصال
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('view-auth').classList.remove('hidden');
             }
         };
 
-        // --- AUTH LOGIC ---
-        function toggleAuthMode() {
+        window.toggleAuthMode = () => {
             isRegister = !isRegister;
             document.getElementById('register-fields').classList.toggle('hidden');
             document.getElementById('auth-title').innerText = isRegister ? "إنشاء حساب جديد" : "تسجيل الدخول";
-            document.getElementById('auth-btn').innerText = isRegister ? "تسجيل" : "دخول";
+            document.getElementById('auth-btn').querySelector('#btn-text').innerText = isRegister ? "تسجيل" : "دخول";
             document.getElementById('auth-switch-text').innerText = isRegister ? "لديك حساب؟ سجل دخول" : "ليس لديك حساب؟ سجل الآن";
-        }
+        };
 
-        async function handleAuth() {
-            const user = document.getElementById('auth-username').value.trim().toLowerCase();
-            const pass = document.getElementById('auth-password').value;
-            const name = document.getElementById('auth-name').value;
+        window.handleAuth = async () => {
+            const username = document.getElementById('auth-username').value.trim().toLowerCase();
+            const password = document.getElementById('auth-password').value;
+            const fullName = document.getElementById('auth-name').value.trim();
+            const btn = document.getElementById('auth-btn');
+            const loader = document.getElementById('btn-loader');
 
-            if (!user || !pass) return showToast("يرجى ملء البيانات");
-
-            if (isRegister) {
-                // Check if username exists
-                const { data: existing } = await _db.from('tuwaiq_users').select('*').eq('username', user).single();
-                if (existing) return showToast("اسم المستخدم محجوز");
-
-                const newUser = {
-                    username: user,
-                    password: pass,
-                    full_name: name || user,
-                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user}`
-                };
-
-                const { error } = await _db.from('tuwaiq_users').insert([newUser]);
-                if (error) return showToast("خطأ في التسجيل");
-                
-                currentUser = newUser;
-                loginSuccess();
-            } else {
-                const { data, error } = await _db.from('tuwaiq_users').select('*').eq('username', user).eq('password', pass).single();
-                if (!data) return showToast("بيانات الدخول غير صحيحة");
-                currentUser = data;
-                loginSuccess();
+            if (!username || !password || (isRegister && !fullName)) {
+                return showToast("يرجى إكمال البيانات");
             }
-        }
 
-        function loginSuccess() {
-            localStorage.setItem('tuwaiq_logged_user', JSON.stringify(currentUser));
-            startApp();
-        }
+            if (isLocal) {
+                // محاكاة دخول محلي بدون قاعدة بيانات
+                userProfile = { username, full_name: fullName || username, avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}` };
+                showApp();
+                return;
+            }
 
-        function startApp() {
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+
+            try {
+                if (isRegister) {
+                    const profileData = {
+                        uid: auth.currentUser.uid,
+                        username: username,
+                        password: password,
+                        full_name: fullName,
+                        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+                        createdAt: serverTimestamp()
+                    };
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid), profileData);
+                    userProfile = profileData;
+                    showApp();
+                } else {
+                    const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid);
+                    const profileSnap = await getDoc(profileRef);
+                    if (profileSnap.exists() && profileSnap.data().username === username && profileSnap.data().password === password) {
+                        userProfile = profileSnap.data();
+                        showApp();
+                    } else {
+                        showToast("بيانات الدخول غير صحيحة");
+                    }
+                }
+            } catch (e) {
+                showToast("حدث خطأ في الاتصال");
+            } finally {
+                btn.disabled = false;
+                loader.classList.add('hidden');
+            }
+        };
+
+        const showApp = () => {
             document.getElementById('view-auth').classList.add('hidden');
+            document.getElementById('loading-screen').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-            document.getElementById('my-avatar-mini').src = currentUser.avatar;
-            document.getElementById('p-avatar').src = currentUser.avatar;
-            document.getElementById('p-name').innerText = currentUser.full_name;
-            document.getElementById('p-username').innerText = `@${currentUser.username}`;
             
-            loadPosts();
-            // Subscribe to real-time changes
-            _db.channel('public:posts').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, payload => {
-                loadPosts();
-            }).subscribe();
-        }
+            document.getElementById('my-avatar-mini').src = userProfile.avatar;
+            document.getElementById('p-avatar').src = userProfile.avatar;
+            document.getElementById('p-name').innerText = userProfile.full_name;
+            document.getElementById('p-username').innerText = `@${userProfile.username}`;
+            
+            if (!isLocal) listenToPosts();
+        };
 
-        // --- CORE LOGIC ---
-        async function createPost() {
+        const listenToPosts = () => {
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), orderBy('createdAt', 'desc'));
+            onSnapshot(q, (snapshot) => {
+                const posts = [];
+                snapshot.forEach(doc => posts.push({id: doc.id, ...doc.data()}));
+                renderFeed(posts);
+                renderTrends(posts);
+                renderMyPosts(posts);
+            }, (err) => console.error(err));
+        };
+
+        window.createPost = async () => {
             const text = document.getElementById('post-text').value.trim();
             if (!text) return;
 
-            const { error } = await _db.from('posts').insert([{
-                content: text,
-                author_name: currentUser.full_name,
-                username: currentUser.username,
-                author_avatar: currentUser.avatar,
-                likes: 0
-            }]);
+            if (isLocal) {
+                showToast("خاصية النشر تتطلب اتصال Firebase حقيقي");
+                return;
+            }
 
-            if (!error) {
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
+                    content: text,
+                    author_name: userProfile.full_name,
+                    username: userProfile.username,
+                    author_avatar: userProfile.avatar,
+                    uid: auth.currentUser.uid,
+                    likes: 0,
+                    createdAt: serverTimestamp()
+                });
                 document.getElementById('post-text').value = "";
-                showToast("تم النشر بنجاح");
+                showToast("تم نشر همّتك!");
+            } catch (e) {
+                showToast("فشل النشر");
             }
-        }
+        };
 
-        async function loadPosts() {
-            const { data, error } = await _db.from('posts').select('*').order('created_at', { ascending: false });
-            if (data) {
-                allPosts = data;
-                renderFeed(data, 'feed-container');
-                renderTrends(data);
-                renderMyPosts(data);
-            }
-        }
-
-        function renderFeed(posts, containerId) {
-            const container = document.getElementById(containerId);
+        const renderFeed = (posts) => {
+            const container = document.getElementById('feed-container');
             container.innerHTML = posts.map(post => `
-                <div class="post-card bg-white">
+                <div class="post-card">
                     <div class="flex gap-3">
                         <img src="${post.author_avatar}" class="w-10 h-10 rounded-full bg-gray-100">
                         <div class="flex-1">
                             <div class="flex items-center justify-between">
                                 <h4 class="text-sm font-black">${post.author_name}</h4>
-                                <span class="text-[10px] text-gray-400">${formatDate(post.created_at)}</span>
+                                <span class="text-[10px] text-gray-400">الآن</span>
                             </div>
                             <p class="text-[11px] text-[#006C48] font-bold">@${post.username}</p>
                             <p class="mt-2 text-sm leading-relaxed">${highlightHashtags(post.content)}</p>
-                            <div class="flex gap-6 mt-4 text-gray-400">
-                                <button class="text-xs hover:text-red-500"><i class="far fa-heart mr-1"></i> ${post.likes || 0}</button>
-                                <button class="text-xs hover:text-[#006C48]"><i class="far fa-comment mr-1"></i> 0</button>
-                                <button class="text-xs hover:text-blue-500"><i class="fas fa-retweet"></i></button>
-                            </div>
                         </div>
                     </div>
                 </div>
             `).join('');
-        }
+        };
 
-        function renderMyPosts(posts) {
-            const myPosts = posts.filter(p => p.username === currentUser.username);
-            const container = document.getElementById('profile-posts');
-            if (myPosts.length === 0) {
-                container.innerHTML = `<div class="p-10 text-center text-gray-400 text-xs">لم تنشر أي همم بعد</div>`;
-                return;
-            }
-            renderFeed(myPosts, 'profile-posts');
-        }
-
-        function renderTrends(posts) {
+        const renderTrends = (posts) => {
             const hashtags = {};
             posts.forEach(p => {
                 const found = p.content.match(/#[\w\u0621-\u064A]+/g);
-                if (found) {
-                    found.forEach(h => {
-                        hashtags[h] = (hashtags[h] || 0) + 1;
-                    });
-                }
+                if (found) found.forEach(h => hashtags[h] = (hashtags[h] || 0) + 1);
             });
-
-            // تحويلها لمصفوفة وفرزها
-            const sorted = Object.entries(hashtags)
-                .map(([tag, count]) => ({ tag, count }))
-                .sort((a, b) => b.count - a.count);
-
-            const container = document.getElementById('trends-list');
-            container.innerHTML = sorted.map((t, index) => `
+            const sorted = Object.entries(hashtags).sort((a, b) => b[1] - a[1]);
+            document.getElementById('trends-list').innerHTML = sorted.map(([tag, count], i) => `
                 <div class="flex justify-between items-center p-4 bg-white rounded-xl shadow-sm border-r-4 border-[#006C48]">
                     <div>
-                        <p class="text-[10px] text-gray-400 font-bold">${index + 1} • متداول الآن</p>
-                        <h3 class="font-black text-lg">${t.tag}</h3>
-                        <p class="text-[10px] text-gray-500">${t.count} مشاركة</p>
+                        <p class="text-[10px] text-gray-400 font-bold">${i + 1} • متداول الآن</p>
+                        <h3 class="font-black text-lg">${tag}</h3>
+                        <p class="text-[10px] text-gray-500">${count} مشاركة</p>
                     </div>
-                    <div class="text-[#006C48] font-black">${t.count > 100 ? '<i class="fas fa-fire"></i>' : ''}</div>
                 </div>
             `).join('');
-        }
+        };
 
-        // --- UI HELPERS ---
-        function switchTab(tab) {
+        const renderMyPosts = (posts) => {
+            const myPosts = posts.filter(p => p.uid === (auth?.currentUser?.uid || 'local'));
+            const container = document.getElementById('profile-posts');
+            container.innerHTML = myPosts.length === 0 ? '<div class="p-10 text-center text-gray-400 text-xs">لا يوجد منشورات</div>' : 
+            myPosts.map(post => `<div class="post-card p-4"><p class="text-sm">${highlightHashtags(post.content)}</p></div>`).join('');
+        };
+
+        const highlightHashtags = (text) => text.replace(/#[\w\u0621-\u064A]+/g, match => `<span class="text-blue-500 font-bold">${match}</span>`);
+        
+        window.switchTab = (tab) => {
             document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-gray-400'));
-            
             document.getElementById(`view-${tab}`).classList.remove('hidden');
             document.getElementById(`nav-${tab}`).classList.add('nav-active');
-            
-            // Add text-gray-400 to others
-            document.querySelectorAll('nav button:not(.nav-active)').forEach(b => b.classList.add('text-gray-400'));
-            
             document.getElementById('main-scroll').scrollTop = 0;
-        }
+        };
 
-        function highlightHashtags(text) {
-            return text.replace(/#[\w\u0621-\u064A]+/g, match => `<span class="text-blue-500 font-bold">${match}</span>`);
-        }
-
-        function formatDate(date) {
-            const d = new Date(date);
-            return d.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function showToast(msg) {
-            const div = document.createElement('div');
-            div.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-2 rounded-full text-xs z-[2000]";
-            div.innerText = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 2000);
-        }
-
-        function toggleDarkMode() {
+        window.toggleDarkMode = () => {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             document.getElementById('theme-icon').className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-600';
+        };
+
+        window.logout = () => {
+            if (auth) auth.signOut();
+            window.location.reload();
+        };
+
+        function showToast(msg) {
+            const div = document.createElement('div');
+            div.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-2 rounded-full text-xs z-[2000] backdrop-blur-md";
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 2500);
         }
 
-        function logout() {
-            localStorage.removeItem('tuwaiq_logged_user');
-            window.location.reload();
-        }
+        init();
     </script>
 </body>
 </html>
