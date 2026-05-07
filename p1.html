@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>منصة طويق | Tuwaiq Platform</title>
+    <title>طويق | إدارة الحساب</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
@@ -25,507 +26,428 @@
 
         body {
             font-family: 'Tajawal', sans-serif;
-            background-color: #e5e7eb;
+            background-color: #f3f4f6;
             color: var(--text-main);
+            transition: background 0.3s ease;
             margin: 0;
-            padding: 0;
             overflow: hidden;
         }
 
         .app-container {
             background-color: var(--bg-main);
-            max-width: 450px;
+            max-width: 500px;
             margin: 0 auto;
             height: 100vh;
-            height: 100dvh;
             position: relative;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .nav-active { color: var(--saudi-green) !important; font-weight: 900; }
+        .nav-active { color: var(--saudi-green) !important; font-weight: 900; transform: scale(1.1); }
         
         main {
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            background-color: inherit;
         }
 
-        .view-content { padding-bottom: 100px; }
-
-        .post-card {
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding: 15px;
+        .settings-menu {
+            position: absolute;
+            top: 65px;
+            left: 20px;
+            width: 220px;
             background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.08);
+            backdrop-filter: blur(10px);
         }
-
-        .btn-primary {
-            background-color: var(--saudi-green);
-            color: white;
-            font-weight: bold;
-            padding: 12px;
-            border-radius: 15px;
-            width: 100%;
-            transition: all 0.2s;
-        }
-
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
-
-        .input-field {
-            background: rgba(128,128,128,0.1);
-            border: 1px solid transparent;
-            border-radius: 12px;
-            padding: 12px;
-            width: 100%;
-            margin-bottom: 10px;
-            outline: none;
-            transition: all 0.2s;
-        }
+        .settings-menu.show { display: block; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
-        .input-field:focus {
-            border-color: var(--saudi-green);
-            background: white;
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        .live-badge {
-            background: #ef4444;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 5px;
-            font-size: 10px;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
+        .profile-tab-active {
+            border-bottom: 3px solid var(--saudi-green);
+            color: var(--saudi-green);
+            opacity: 1 !important;
         }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        #loading-screen {
-            background: var(--saudi-green);
-            z-index: 2000;
-        }
-        
-        .local-badge {
-            background: #f59e0b;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 9px;
-            font-weight: bold;
-        }
+        /* Custom File Input */
+        #avatar-input { display: none; }
     </style>
 </head>
 <body>
 
-    <!-- Loading Overlay -->
-    <div id="loading-screen" class="fixed inset-0 flex items-center justify-center text-white">
-        <div class="text-center">
-            <i class="fas fa-mountain text-5xl animate-bounce mb-4"></i>
-            <p class="font-bold tracking-widest">جاري التحميل...</p>
+    <!-- Login View -->
+    <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
+        <div class="mb-12 text-white animate-pulse">
+            <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6">
+                <i class="fas fa-mountain text-[#006C48] text-4xl"></i>
+            </div>
+            <h1 class="text-3xl font-black mb-2">منصة طويق</h1>
+            <p class="text-white/80 font-medium">همة تعانق السماء 🇸🇦</p>
         </div>
+        <button onclick="handleLogin()" class="w-full max-w-xs bg-white text-gray-900 font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-4 shadow-xl hover:brightness-95 transition">
+            <img src="https://www.google.com/favicon.ico" class="w-6 h-6">
+            دخول سريع للمعاينة
+        </button>
     </div>
 
-    <!-- Auth View -->
-    <div id="view-auth" class="fixed inset-0 z-[1000] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center hidden">
-        <div class="mb-8 text-white">
-            <i class="fas fa-mountain text-6xl mb-4"></i>
-            <h1 class="text-3xl font-black">منصة طويق</h1>
-            <p class="opacity-80">همة تعانق السماء 🇸🇦</p>
-        </div>
-
-        <div class="w-full max-w-xs space-y-3 bg-white p-6 rounded-[2rem] shadow-2xl text-right">
-            <h2 id="auth-title" class="text-xl font-black text-gray-800 mb-4 text-center">تسجيل الدخول</h2>
-            
-            <div id="register-fields" class="hidden">
-                <input type="text" id="auth-name" placeholder="الاسم الكامل" class="input-field text-gray-900">
+    <!-- Profile Edit Modal -->
+    <div id="modal-edit-profile" class="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-white dark:bg-[#0f130f] w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] p-8 shadow-2xl transition-all border-t border-white/10">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black">إعدادات الحساب</h3>
+                <button onclick="closeEditModal()" class="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center"><i class="fas fa-times"></i></button>
             </div>
             
-            <input type="text" id="auth-username" placeholder="اسم المستخدم (بالإنجليزي)" class="input-field text-gray-900">
-            <input type="password" id="auth-password" placeholder="كلمة المرور" class="input-field text-gray-900">
-            
-            <button onclick="handleAuth()" id="auth-btn" class="btn-primary mt-4 flex justify-center items-center gap-2">
-                <span id="btn-text">دخول</span>
-                <i id="btn-loader" class="fas fa-circle-notch fa-spin hidden"></i>
-            </button>
-            
-            <p class="text-xs text-gray-500 text-center mt-4 cursor-pointer" onclick="toggleAuthMode()">
-                <span id="auth-switch-text">ليس لديك حساب؟ سجل الآن</span>
-            </p>
+            <div class="space-y-6">
+                <div class="flex flex-col items-center gap-3">
+                    <div class="relative group" onclick="document.getElementById('avatar-input').click()">
+                        <img id="edit-avatar-preview" src="" class="w-32 h-32 rounded-[2.5rem] object-cover border-4 border-[#006C48] shadow-xl">
+                        <div class="absolute inset-0 bg-black/40 rounded-[2.5rem] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <i class="fas fa-camera text-white text-2xl"></i>
+                        </div>
+                        <input type="file" id="avatar-input" accept="image/*" onchange="handleImageUpload(event)">
+                    </div>
+                    <p class="text-xs font-bold opacity-50">اضغط لتغيير الصورة من الألبوم</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-black px-2">الاسم بالكامل</label>
+                    <input type="text" id="edit-name" placeholder="اسمك الكريم" class="w-full bg-gray-100 dark:bg-white/5 rounded-2xl p-4 font-bold outline-none border-2 border-transparent focus:border-[#006C48] transition">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-black px-2">نبذة عنك (Bio)</label>
+                    <textarea id="edit-bio" placeholder="تحدث عن طموحاتك.." class="w-full bg-gray-100 dark:bg-white/5 rounded-2xl p-4 font-bold outline-none border-2 border-transparent focus:border-[#006C48] transition resize-none h-28"></textarea>
+                </div>
+
+                <button onclick="saveProfileChanges()" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg hover:shadow-[#006C48]/40 active:scale-95 transition-all mt-4">حفظ البيانات</button>
+            </div>
         </div>
     </div>
 
-    <!-- Main App -->
+    <!-- Main App Structure -->
     <div id="app" class="app-container hidden">
-        <header class="shrink-0 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex justify-between items-center z-50">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-[#006C48] rounded-lg flex items-center justify-center">
-                    <i class="fas fa-mountain text-white text-xs"></i>
+        <header class="shrink-0 bg-inherit/90 backdrop-blur-md px-6 py-4 flex justify-between items-center z-[60] border-b border-gray-500/5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-[#006C48] rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-mountain text-white text-sm"></i>
                 </div>
-                <div>
-                    <h1 class="text-lg font-black leading-none">طويق</h1>
-                    <span id="connection-status" class="text-[8px] font-bold"></span>
+                <h1 class="text-xl font-black tracking-tighter">طويق</h1>
+            </div>
+            <div class="flex items-center gap-4 relative">
+                <button onclick="toggleDarkMode()" class="text-xl opacity-50 hover:opacity-100 transition"><i id="theme-icon" class="fas fa-moon"></i></button>
+                <button onclick="toggleSettings()" class="text-xl opacity-50 hover:opacity-100 transition"><i class="fas fa-sliders"></i></button>
+                
+                <div id="settings-menu" class="settings-menu">
+                    <button onclick="openEditModal()" class="w-full text-right px-6 py-4 hover:bg-gray-100 dark:hover:bg-white/5 border-b border-gray-500/5 flex items-center justify-between font-bold">
+                        <span>تعديل الملف</span>
+                        <i class="fas fa-user-pen text-xs opacity-40"></i>
+                    </button>
+                    <button onclick="handleLogout()" class="w-full text-right px-6 py-4 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 flex items-center justify-between font-bold">
+                        <span>تسجيل الخروج</span>
+                        <i class="fas fa-power-off text-xs opacity-60"></i>
+                    </button>
                 </div>
             </div>
-            <button onclick="toggleDarkMode()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <i id="theme-icon" class="fas fa-moon text-gray-600"></i>
-            </button>
         </header>
 
-        <main id="main-scroll" class="no-scrollbar">
+        <main class="no-scrollbar">
+            <!-- Home Feed View -->
             <section id="view-home" class="view-content">
-                <div class="p-4 bg-white border-b sticky top-0 z-10">
-                    <div class="flex gap-3">
-                        <img id="my-avatar-mini" src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" class="w-10 h-10 rounded-full bg-gray-200 object-cover">
+                <div class="p-4">
+                    <div class="relative">
+                        <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 opacity-30"></i>
+                        <input type="text" placeholder="ابحث في طويق.." class="w-full bg-gray-500/5 rounded-2xl py-3 pr-11 pl-4 text-sm font-bold outline-none focus:bg-transparent focus:ring-2 ring-[#006C48]/20 transition">
+                    </div>
+                </div>
+
+                <div class="px-5 py-4 border-b border-gray-500/5">
+                    <div class="flex gap-4">
+                        <img id="user-avatar-mini" src="" class="w-12 h-12 rounded-2xl object-cover shadow-sm cursor-pointer" onclick="switchTab('profile')">
                         <div class="flex-1">
-                            <textarea id="post-text" placeholder="ما هي همتك اليوم؟" class="w-full border-none focus:ring-0 resize-none h-12 text-sm pt-2 bg-transparent outline-none" maxlength="280"></textarea>
-                            <div class="flex justify-between items-center mt-2">
-                                <span class="text-[10px] text-gray-400">استخدم #هاشتاق لرفع الترند</span>
-                                <button onclick="createPost()" class="bg-[#006C48] text-white px-5 py-1.5 rounded-full text-xs font-bold">نشر</button>
+                            <textarea id="post-input" placeholder="ما الجديد في همتك؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium pt-2 h-12 overflow-hidden" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                            <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-500/5">
+                                <div class="flex gap-4 text-[#006C48] text-xl">
+                                    <button class="hover:bg-gray-100 p-2 rounded-xl transition"><i class="far fa-image"></i></button>
+                                </div>
+                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-2.5 rounded-2xl font-black shadow-lg hover:scale-105 transition-all">نشر</button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="feed-container"></div>
+                <div id="main-feed" class="divide-y divide-gray-500/5 pb-32"></div>
             </section>
 
-            <section id="view-live" class="view-content hidden p-4">
-                <h2 class="text-xl font-black mb-4">البثوث المباشرة</h2>
-                <div id="live-list" class="grid grid-cols-1 gap-4">
-                    <div class="relative h-48 rounded-2xl overflow-hidden bg-gray-300">
-                        <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=400" class="w-full h-full object-cover">
-                        <div class="absolute top-3 left-3 live-badge">مباشر</div>
-                        <div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black text-white">
-                            <p class="text-sm font-bold">نقاش تقني حول رؤية 2030</p>
-                            <p class="text-[10px] opacity-70">سارة الشمري • 1.2K مشاهد</p>
+            <!-- Profile View -->
+            <section id="view-profile" class="view-content hidden pb-32">
+                <div class="h-48 bg-[#006C48] relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1548013146-72479768b921?auto=format&fit=crop&w=1200" class="w-full h-full object-cover opacity-40">
+                </div>
+                <div class="px-6 -mt-16 relative">
+                    <div class="flex justify-between items-end">
+                        <img id="profile-avatar-large" src="" class="w-32 h-32 rounded-[2.8rem] bg-white border-8 border-white dark:border-[#0f130f] shadow-2xl object-cover">
+                        <button onclick="openEditModal()" class="mb-2 bg-gray-100 dark:bg-white/5 px-6 py-2.5 rounded-2xl font-black text-sm border border-gray-500/10">تعديل الملف</button>
+                    </div>
+                    <div class="mt-5">
+                        <div class="flex items-center gap-2">
+                            <h2 id="profile-name" class="text-2xl font-black">--</h2>
+                            <i class="fas fa-shield-check text-[#D4AF37] text-sm"></i>
                         </div>
+                        <p id="profile-handle" class="text-[#006C48] font-black text-sm mt-0.5">@--</p>
+                        <p id="profile-bio" class="mt-4 text-sm font-medium opacity-80 leading-relaxed max-w-sm">--</p>
+                    </div>
+                    <div class="flex gap-8 mt-6 pb-6">
+                        <div class="flex gap-1.5 items-center"><span class="font-black text-lg">1.2K</span><span class="text-[10px] opacity-40 font-black">متابِع</span></div>
+                        <div class="flex gap-1.5 items-center"><span class="font-black text-lg">850</span><span class="text-[10px] opacity-40 font-black">يتابعني</span></div>
                     </div>
                 </div>
-            </section>
-
-            <section id="view-trends" class="view-content hidden p-6">
-                <h2 class="text-xl font-black mb-6">الأكثر تداولاً 🇸🇦</h2>
-                <div id="trends-list" class="space-y-4"></div>
-            </section>
-
-            <section id="view-profile" class="view-content hidden">
-                <div class="flex flex-col items-center pt-8 pb-4">
-                    <div class="relative">
-                        <img id="p-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" class="w-24 h-24 rounded-full border-4 border-white shadow-xl bg-gray-200 object-cover">
-                        <button class="absolute bottom-0 right-0 bg-[#006C48] text-white w-7 h-7 rounded-full border-2 border-white text-[10px]"><i class="fas fa-camera"></i></button>
-                    </div>
-                    <h3 id="p-name" class="mt-4 text-xl font-black">--</h3>
-                    <p id="p-username" class="text-gray-400 text-sm font-bold">@--</p>
-                    
-                    <div class="flex gap-8 mt-6">
-                        <div class="text-center"><p class="font-black">1.2K</p><p class="text-[10px] text-gray-400">متابعة</p></div>
-                        <div class="text-center"><p class="font-black">850</p><p class="text-[10px] text-gray-400">متابعين</p></div>
-                        <div class="text-center"><p class="font-black">5.4K</p><p class="text-[10px] text-gray-400">إعجاب</p></div>
-                    </div>
-
-                    <div class="flex gap-2 mt-6 w-full px-10">
-                        <button class="flex-1 bg-gray-100 py-2 rounded-md font-bold text-sm">تعديل الملف</button>
-                        <button onclick="logout()" class="w-12 bg-red-50 text-red-500 py-2 rounded-md"><i class="fas fa-sign-out-alt"></i></button>
-                    </div>
+                <div class="flex border-b border-gray-500/5 sticky top-0 bg-inherit z-20">
+                    <button onclick="setProfileTab('my-tweets')" id="tab-my-tweets" class="flex-1 py-5 text-xs font-black transition-all profile-tab-active">تغريداتي</button>
+                    <button onclick="setProfileTab('my-likes')" id="tab-my-likes" class="flex-1 py-5 text-xs font-black transition-all opacity-30">الإعجابات</button>
                 </div>
-
-                <div class="border-t mt-4">
-                    <div class="flex border-b">
-                        <button class="flex-1 py-3 border-b-2 border-black font-black text-sm"><i class="fas fa-th-large mr-2"></i> هممي</button>
-                        <button class="flex-1 py-3 text-gray-400 text-sm"><i class="fas fa-heart mr-2"></i> المعجب بها</button>
-                    </div>
-                    <div id="profile-posts" class="divide-y"></div>
-                </div>
+                <div id="user-posts-feed" class="divide-y divide-gray-500/5"></div>
             </section>
         </main>
 
-        <nav class="shrink-0 bg-white border-t flex justify-around items-center h-20 z-[100]">
-            <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1">
-                <i class="fas fa-home text-xl"></i>
-                <span class="text-[9px]">الرئيسية</span>
+        <nav class="shrink-0 bg-inherit border-t border-gray-500/5 flex justify-around items-center h-20 z-[100]">
+            <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1 flex-1">
+                <i class="fas fa-home-alt text-xl"></i>
+                <span class="text-[9px] font-black">الرئيسية</span>
             </button>
-            <button onclick="switchTab('live')" id="nav-live" class="text-gray-400 flex flex-col items-center gap-1">
-                <i class="fas fa-video text-xl"></i>
-                <span class="text-[9px]">البثوث</span>
-            </button>
-            <button onclick="switchTab('trends')" id="nav-trends" class="text-gray-400 flex flex-col items-center gap-1">
-                <i class="fas fa-hashtag text-xl"></i>
-                <span class="text-[9px]">الترند</span>
-            </button>
-            <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1">
+            <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1 flex-1">
                 <i class="fas fa-user text-xl"></i>
-                <span class="text-[9px]">ملفي</span>
+                <span class="text-[9px] font-black">حسابي</span>
             </button>
         </nav>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // Supabase Config - DO NOT EDIT
+        const SUPABASE_URL = 'https://cuaoopauabnmpmoddvby.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW9vcGF1YWJubXBtb2RkdmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjgyNDUsImV4cCI6MjA5MzIwNDI0NX0._vyBPMk3oaJqMJaBRY4DaKj2ZjSodKPxZ77kFiZUH9o';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const defaultAppId = 'tuwaiq-platform-local';
-        const dummyConfig = { apiKey: "fake-key", authDomain: "local", projectId: "local" };
-        
-        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : dummyConfig;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : defaultAppId;
-        const isLocal = config.apiKey === "fake-key";
+        let userSession = null;
+        let allPosts = [];
+        let currentTab = 'home';
+        let currentProfileTab = 'my-tweets';
 
-        let app, auth, db;
-        let userProfile = null;
-        let isRegister = false;
+        window.onload = () => initApp();
 
-        const init = async () => {
-            const statusEl = document.getElementById('connection-status');
-            
-            if (isLocal) {
-                statusEl.innerText = "الوضع التجريبي (محلي)";
-                statusEl.className = "text-[8px] font-bold text-orange-500";
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('view-auth').classList.remove('hidden');
-                return;
-            }
-
-            try {
-                app = initializeApp(config);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                
-                statusEl.innerText = "متصل بقاعدة البيانات";
-                statusEl.className = "text-[8px] font-bold text-green-600";
-
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                        const profileSnap = await getDoc(profileRef);
-                        
-                        if (profileSnap.exists()) {
-                            userProfile = profileSnap.data();
-                            showApp();
-                        } else {
-                            document.getElementById('loading-screen').classList.add('hidden');
-                            document.getElementById('view-auth').classList.remove('hidden');
-                        }
-                    }
-                });
-            } catch (e) {
-                console.error("Firebase Init Error:", e);
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('view-auth').classList.remove('hidden');
-            }
-        };
-
-        window.toggleAuthMode = () => {
-            isRegister = !isRegister;
-            document.getElementById('register-fields').classList.toggle('hidden');
-            document.getElementById('auth-title').innerText = isRegister ? "إنشاء حساب جديد" : "تسجيل الدخول";
-            document.getElementById('auth-btn').querySelector('#btn-text').innerText = isRegister ? "تسجيل" : "دخول";
-            document.getElementById('auth-switch-text').innerText = isRegister ? "لديك حساب؟ سجل دخول" : "ليس لديك حساب؟ سجل الآن";
-        };
-
-        window.handleAuth = async () => {
-            const username = document.getElementById('auth-username').value.trim().toLowerCase();
-            const password = document.getElementById('auth-password').value;
-            const fullName = document.getElementById('auth-name').value.trim();
-            const btn = document.getElementById('auth-btn');
-            const loader = document.getElementById('btn-loader');
-
-            if (!username || !password || (isRegister && !fullName)) {
-                return showToast("يرجى إكمال البيانات");
-            }
-
-            if (isLocal) {
-                userProfile = { 
-                    username, 
-                    full_name: fullName || username, 
-                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-                    uid: 'local-user'
-                };
+        function initApp() {
+            const stored = localStorage.getItem('tuwaiq_user');
+            if (stored) {
+                userSession = JSON.parse(stored);
                 showApp();
-                showToast("دخلت بالوضع التجريبي المحلي");
-                return;
-            }
-
-            btn.disabled = true;
-            loader.classList.remove('hidden');
-
-            try {
-                if (isRegister) {
-                    const profileData = {
-                        uid: auth.currentUser.uid,
-                        username: username,
-                        password: password,
-                        full_name: fullName,
-                        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-                        createdAt: serverTimestamp()
-                    };
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid), profileData);
-                    userProfile = profileData;
-                    showApp();
-                } else {
-                    const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid);
-                    const profileSnap = await getDoc(profileRef);
-                    if (profileSnap.exists() && profileSnap.data().username === username && profileSnap.data().password === password) {
-                        userProfile = profileSnap.data();
-                        showApp();
-                    } else {
-                        showToast("بيانات الدخول غير صحيحة");
-                    }
-                }
-            } catch (e) {
-                showToast("حدث خطأ في الاتصال");
-            } finally {
-                btn.disabled = false;
-                loader.classList.add('hidden');
-            }
-        };
-
-        const showApp = () => {
-            document.getElementById('view-auth').classList.add('hidden');
-            document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            
-            document.getElementById('my-avatar-mini').src = userProfile.avatar;
-            document.getElementById('p-avatar').src = userProfile.avatar;
-            document.getElementById('p-name').innerText = userProfile.full_name;
-            document.getElementById('p-username').innerText = `@${userProfile.username}`;
-            
-            if (!isLocal) {
-                listenToPosts();
             } else {
-                // بيانات وهمية للوضع المحلي
-                const dummyPosts = [
-                    { id: 1, author_name: "تجريبي", username: "demo", author_avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1", content: "هذا منشور تجريبي في الوضع المحلي #طويق", uid: "local" }
-                ];
-                renderFeed(dummyPosts);
+                document.getElementById('view-login').classList.remove('hidden');
             }
-        };
-
-        const listenToPosts = () => {
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), orderBy('createdAt', 'desc'));
-            onSnapshot(q, (snapshot) => {
-                const posts = [];
-                snapshot.forEach(doc => posts.push({id: doc.id, ...doc.data()}));
-                renderFeed(posts);
-                renderTrends(posts);
-                renderMyPosts(posts);
-            }, (err) => console.error(err));
-        };
-
-        window.createPost = async () => {
-            const text = document.getElementById('post-text').value.trim();
-            if (!text) return;
-
-            if (isLocal) {
-                showToast("هذه الميزة تعمل فقط عند رفع الكود للمنصة");
-                return;
-            }
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), {
-                    content: text,
-                    author_name: userProfile.full_name,
-                    username: userProfile.username,
-                    author_avatar: userProfile.avatar,
-                    uid: auth.currentUser.uid,
-                    likes: 0,
-                    createdAt: serverTimestamp()
-                });
-                document.getElementById('post-text').value = "";
-                showToast("تم نشر همّتك!");
-            } catch (e) {
-                showToast("فشل النشر");
-            }
-        };
-
-        const renderFeed = (posts) => {
-            const container = document.getElementById('feed-container');
-            container.innerHTML = posts.map(post => `
-                <div class="post-card">
-                    <div class="flex gap-3">
-                        <img src="${post.author_avatar}" class="w-10 h-10 rounded-full bg-gray-100">
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <h4 class="text-sm font-black">${post.author_name}</h4>
-                                <span class="text-[10px] text-gray-400">الآن</span>
-                            </div>
-                            <p class="text-[11px] text-[#006C48] font-bold">@${post.username}</p>
-                            <p class="mt-2 text-sm leading-relaxed">${highlightHashtags(post.content)}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        };
-
-        const renderTrends = (posts) => {
-            const hashtags = {};
-            posts.forEach(p => {
-                const found = p.content.match(/#[\w\u0621-\u064A]+/g);
-                if (found) found.forEach(h => hashtags[h] = (hashtags[h] || 0) + 1);
-            });
-            const sorted = Object.entries(hashtags).sort((a, b) => b[1] - a[1]);
-            document.getElementById('trends-list').innerHTML = sorted.map(([tag, count], i) => `
-                <div class="flex justify-between items-center p-4 bg-white rounded-xl shadow-sm border-r-4 border-[#006C48]">
-                    <div>
-                        <p class="text-[10px] text-gray-400 font-bold">${i + 1} • متداول الآن</p>
-                        <h3 class="font-black text-lg">${tag}</h3>
-                        <p class="text-[10px] text-gray-500">${count} مشاركة</p>
-                    </div>
-                </div>
-            `).join('');
-        };
-
-        const renderMyPosts = (posts) => {
-            const myPosts = posts.filter(p => p.uid === (auth?.currentUser?.uid || 'local'));
-            const container = document.getElementById('profile-posts');
-            container.innerHTML = myPosts.length === 0 ? '<div class="p-10 text-center text-gray-400 text-xs">لا يوجد منشورات</div>' : 
-            myPosts.map(post => `<div class="post-card p-4"><p class="text-sm">${highlightHashtags(post.content)}</p></div>`).join('');
-        };
-
-        const highlightHashtags = (text) => text.replace(/#[\w\u0621-\u064A]+/g, match => `<span class="text-blue-500 font-bold">${match}</span>`);
-        
-        window.switchTab = (tab) => {
-            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-gray-400'));
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
-            document.getElementById(`nav-${tab}`).classList.add('nav-active');
-            document.getElementById('main-scroll').scrollTop = 0;
-        };
-
-        window.toggleDarkMode = () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            document.getElementById('theme-icon').className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-600';
-        };
-
-        window.logout = () => {
-            if (auth) auth.signOut();
-            window.location.reload();
-        };
-
-        function showToast(msg) {
-            const div = document.createElement('div');
-            div.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-black/80 text-white px-6 py-2 rounded-full text-xs z-[2000] backdrop-blur-md";
-            div.innerText = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 2500);
         }
 
-        init();
+        function handleLogin() {
+            const id = Math.random().toString(36).substring(7);
+            userSession = {
+                id: 'usr_' + id,
+                full_name: 'بطل طويق',
+                username: 'tuwaiq_' + id.substring(0,3),
+                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${id}`,
+                bio: 'همة تعانق السماء 🇸🇦'
+            };
+            localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
+            showApp();
+        }
+
+        function showApp() {
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            refreshUI();
+            loadPosts();
+        }
+
+        function refreshUI() {
+            if(!userSession) return;
+            document.getElementById('user-avatar-mini').src = userSession.avatar_url;
+            document.getElementById('profile-avatar-large').src = userSession.avatar_url;
+            document.getElementById('profile-name').innerText = userSession.full_name;
+            document.getElementById('profile-handle').innerText = `@${userSession.username}`;
+            document.getElementById('profile-bio').innerText = userSession.bio || "لا توجد نبذة..";
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('edit-avatar-preview').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openEditModal() {
+            document.getElementById('edit-avatar-preview').src = userSession.avatar_url;
+            document.getElementById('edit-name').value = userSession.full_name;
+            document.getElementById('edit-bio').value = userSession.bio || "";
+            document.getElementById('modal-edit-profile').classList.remove('hidden');
+            document.getElementById('settings-menu').classList.remove('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('modal-edit-profile').classList.add('hidden');
+        }
+
+        async function saveProfileChanges() {
+            const newName = document.getElementById('edit-name').value.trim();
+            const newBio = document.getElementById('edit-bio').value.trim();
+            const newAvatar = document.getElementById('edit-avatar-preview').src;
+
+            if (!newName) {
+                showToast("يرجى إدخال الاسم");
+                return;
+            }
+
+            // تحديث بيانات الجلسة الحالية
+            userSession.full_name = newName;
+            userSession.bio = newBio;
+            userSession.avatar_url = newAvatar;
+
+            // الحفظ في LocalStorage
+            localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
+            
+            // تحديث الواجهة
+            refreshUI();
+            closeEditModal();
+            showToast("تم الحفظ بنجاح ✅");
+            
+            // إعادة تحميل المنشورات لتحديث الصور والأسماء فيها
+            loadPosts();
+        }
+
+        async function loadPosts() {
+            const { data, error } = await _supabase
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (!error) {
+                allPosts = data;
+                renderFeed('main-feed', allPosts);
+                if (currentTab === 'profile') refreshProfileFeed();
+            }
+        }
+
+        async function publishPost() {
+            const input = document.getElementById('post-input');
+            const content = input.value.trim();
+            if (!content) return;
+
+            const { error } = await _supabase.from('posts').insert([{
+                content: content,
+                author_name: userSession.full_name,
+                author_avatar: userSession.avatar_url,
+                username: userSession.username,
+                likes: 0
+            }]);
+
+            if (!error) {
+                input.value = "";
+                loadPosts();
+                showToast("تم النشر 🚀");
+            }
+        }
+
+        function renderFeed(containerId, posts) {
+            const container = document.getElementById(containerId);
+            if (!posts.length) {
+                container.innerHTML = `<div class="p-20 text-center opacity-30 font-bold">لا يوجد محتوى</div>`;
+                return;
+            }
+
+            container.innerHTML = posts.map(post => `
+                <div class="p-5">
+                    <div class="flex gap-4 mb-3">
+                        <img src="${post.author_avatar}" class="w-12 h-12 rounded-2xl object-cover">
+                        <div class="flex-1">
+                            <h4 class="font-black text-sm">${post.author_name}</h4>
+                            <p class="text-[11px] text-[#006C48] font-bold">@${post.username}</p>
+                        </div>
+                    </div>
+                    <p class="text-[15px] mb-4">${post.content}</p>
+                    <div class="flex gap-10 opacity-40 text-xs font-black">
+                        <button onclick="likePost('${post.id}')"><i class="far fa-heart ml-1"></i>${post.likes || 0}</button>
+                        <button><i class="far fa-comment ml-1"></i>0</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById(`nav-${tab}`).classList.add('nav-active');
+            if (tab === 'profile') refreshProfileFeed();
+            document.getElementById('settings-menu').classList.remove('show');
+        }
+
+        function setProfileTab(tabId) {
+            currentProfileTab = tabId;
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.remove('profile-tab-active'));
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => btn.classList.add('opacity-30'));
+            const el = document.getElementById(`tab-${tabId}`);
+            el.classList.add('profile-tab-active');
+            el.classList.remove('opacity-30');
+            refreshProfileFeed();
+        }
+
+        function refreshProfileFeed() {
+            const filtered = allPosts.filter(p => p.username === userSession.username);
+            renderFeed('user-posts-feed', filtered);
+        }
+
+        function toggleSettings() {
+            document.getElementById('settings-menu').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('tuwaiq_user');
+            window.location.reload();
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            icon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-8 py-3 rounded-2xl text-sm font-black shadow-2xl z-[2000]";
+            t.innerText = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2500);
+        }
+
+        async function likePost(id) {
+            const post = allPosts.find(p => p.id === id);
+            await _supabase.from('posts').update({ likes: (post.likes || 0) + 1 }).eq('id', id);
+            loadPosts();
+        }
     </script>
 </body>
 </html>
