@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>منصة طويق | Tuwaiq Platform Live</title>
+    <title>منصة طويق | Tuwaiq Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,24 +16,20 @@
             --bg-main: #f8faf8;
             --card-bg: #ffffff;
             --text-main: #0a0a0a;
-            --accent: #00a676;
         }
         
         .dark-mode {
             --bg-main: #050705;
             --card-bg: #0f130f;
             --text-main: #f0f0f0;
-            --accent: #006C48;
         }
 
         body {
             font-family: 'Tajawal', sans-serif;
             background-color: #e5e7eb;
             color: var(--text-main);
-            transition: background-color 0.3s ease;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+            transition: all 0.3s ease;
+            margin: 0; padding: 0; overflow: hidden;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -46,14 +42,13 @@
             position: relative;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .nav-active { color: var(--saudi-green) !important; font-weight: 900; }
-        .nav-active i { transform: scale(1.2); }
         
         main {
             flex: 1;
@@ -62,37 +57,67 @@
             background-color: inherit;
         }
 
-        .post-card {
-            transition: background-color 0.2s;
-        }
-        
-        .post-card:active {
-            background-color: rgba(0,0,0,0.02);
+        .scroll-spacer { padding-bottom: 120px; }
+
+        .live-overlay {
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.5) 100%);
         }
 
-        .liked-heart { color: #ef4444 !important; animation: pop 0.3s ease-out; }
-        
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.4); }
-            100% { transform: scale(1); }
+        #live-video-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
         }
 
-        .loading-shimmer {
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+        .heart-animation {
+            position: absolute;
+            bottom: 100px;
+            right: 20px;
+            pointer-events: none;
+            animation: floatUp 2s ease-out forwards;
+            z-index: 100;
         }
 
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+            100% { transform: translateY(-400px) scale(1.5) rotate(20deg); opacity: 0; }
         }
+
+        .lion-animation {
+            animation: lion-entrance 3.5s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards;
+            filter: drop-shadow(0 0 30px rgba(212, 175, 55, 1));
+        }
+
+        @keyframes lion-entrance {
+            0% { transform: scale(0) translateY(100px) rotate(-10deg); opacity: 0; }
+            30% { transform: scale(1.2) translateY(-20px) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1); }
+            80% { transform: scale(1.1) translateY(-50px); opacity: 1; }
+            100% { transform: scale(2.5) translateY(-300px); opacity: 0; }
+        }
+
+        .shake { animation: screen-shake 0.5s infinite; }
+        @keyframes screen-shake {
+            0% { transform: translate(2px, 2px); }
+            25% { transform: translate(-3px, -2px); }
+            50% { transform: translate(3px, 1px); }
+            100% { transform: translate(0,0); }
+        }
+
+        .gold-particle {
+            position: absolute;
+            background: linear-gradient(45deg, #D4AF37, #FFF5B7);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fall linear forwards;
+            z-index: 5000;
+        }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- شاشة تسجيل الدخول -->
     <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
         <div class="mb-10 text-white">
             <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6">
@@ -103,38 +128,50 @@
         </div>
         <button onclick="handleLogin()" class="w-full max-w-xs bg-white text-gray-900 font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-4 shadow-xl hover:scale-105 transition-transform active:scale-95">
             <img src="https://www.google.com/favicon.ico" class="w-6 h-6">
-            تسجيل الدخول السريع
+            تسجيل الدخول عبر جوجل
         </button>
     </div>
 
-    <!-- شاشة إكمال الملف -->
     <div id="view-setup" class="fixed inset-0 z-[998] bg-white flex flex-col p-8 hidden overflow-y-auto text-gray-900">
-        <h2 class="text-2xl font-black mb-2">مرحباً بك في طويق</h2>
-        <p class="text-gray-400 text-sm mb-8">لنخصص ملفك الشخصي لنبدأ الرحلة</p>
+        <h2 class="text-2xl font-black mb-2">إكمال ملفك الشخصي</h2>
+        <p class="text-gray-400 text-sm mb-8">لنتمكن من تخصيص تجربتك في طويق</p>
         <div class="space-y-6">
             <div class="flex justify-center mb-6">
                 <div class="relative group">
                     <img id="setup-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Tuwaiq" class="w-24 h-24 rounded-3xl bg-gray-100 border-4 border-[#006C48]/20 object-cover">
-                    <button onclick="changeAvatar()" class="absolute -bottom-2 -right-2 bg-[#006C48] text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                        <i class="fas fa-sync-alt text-xs"></i>
-                    </button>
+                    <div class="absolute -bottom-2 -right-2 bg-[#006C48] text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-camera text-xs"></i></div>
                 </div>
             </div>
             <div>
-                <label class="text-xs font-black opacity-40 block mb-2 mr-1">الاسم</label>
-                <input type="text" id="setup-name" placeholder="مثال: محمد السعد" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48]">
+                <label class="text-xs font-black opacity-40 block mb-2 mr-1">الاسم الكامل</label>
+                <input type="text" id="setup-name" placeholder="مثلاً: محمد القحطاني" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900 outline-none">
             </div>
             <div>
                 <label class="text-xs font-black opacity-40 block mb-2 mr-1">اسم المستخدم (بالإنجليزي)</label>
-                <input type="text" id="setup-username" placeholder="e.g. m_saud" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48]">
+                <input type="text" id="setup-username" placeholder="tuwaiq_hero" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900 outline-none">
             </div>
-            <button onclick="completeProfile()" id="btn-save-profile" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg mt-4 transition-all active:scale-95">دخول المنصة</button>
+            <button onclick="completeProfile()" id="btn-save-profile" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg mt-4 active:scale-95 transition-all">دخول المنصة</button>
         </div>
     </div>
 
-    <!-- تطبيق طويق الرئيسي -->
+    <div id="gift-overlay" class="fixed inset-0 hidden pointer-events-none z-[5000] flex items-center justify-center bg-black/30 backdrop-blur-[2px]">
+        <div id="lion-container" class="relative flex flex-col items-center">
+            <svg class="lion-animation w-72 h-72" viewBox="0 0 200 200">
+                <path fill="#D4AF37" d="M100,20 C120,20 140,30 150,50 C160,70 160,90 150,110 C140,130 120,140 100,140 C80,140 60,130 50,110 C40,90 40,70 50,50 C60,30 80,20 100,20 Z" />
+                <circle cx="85" cy="70" r="5" fill="#FFF" />
+                <circle cx="115" cy="70" r="5" fill="#FFF" />
+                <path d="M50,50 L30,30 M150,50 L170,30" stroke="#D4AF37" stroke-width="5" />
+                <text x="75" y="110" font-family="Arial" font-size="20" fill="#FFF">🦁</text>
+            </svg>
+            <div class="mt-4 text-white font-black text-3xl drop-shadow-2xl text-center">
+                <span class="block text-[#D4AF37] text-4xl mb-2">أسد طويق الملكي! 👑</span>
+                <span id="sender-name-label" class="bg-black/60 px-8 py-3 rounded-full text-xl mt-4 inline-block border border-white/20">من: همة عالية</span>
+            </div>
+        </div>
+    </div>
+
     <div id="app" class="app-container hidden">
-        <header class="shrink-0 bg-inherit/80 backdrop-blur-md border-b border-gray-500/5 px-6 py-4 flex justify-between items-center z-50">
+        <header id="app-header" class="shrink-0 bg-inherit/80 backdrop-blur-md border-b border-gray-500/5 px-6 py-4 flex justify-between items-center z-50">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 bg-[#006C48] rounded-xl flex items-center justify-center shadow-md">
                     <i class="fas fa-mountain text-white text-sm"></i>
@@ -142,113 +179,140 @@
                 <h1 class="text-lg font-black tracking-tight">طويق</h1>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="toggleDarkMode()" class="text-lg opacity-40 hover:opacity-100 transition-opacity">
-                    <i id="theme-icon" class="fas fa-moon"></i>
-                </button>
+                <button onclick="toggleDarkMode()" class="text-lg opacity-40 hover:opacity-100 transition"><i id="theme-icon" class="fas fa-moon"></i></button>
                 <div class="relative">
-                    <i class="far fa-bell text-lg opacity-40"></i>
-                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    <button onclick="showToast('لا توجد تنبيهات جديدة')" class="text-lg opacity-40 hover:opacity-100 transition"><i class="far fa-bell"></i></button>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                 </div>
             </div>
         </header>
 
-        <main class="no-scrollbar" id="app-main">
-            <!-- وجهة الرئيسية -->
+        <main class="no-scrollbar">
             <section id="view-home" class="view-content">
-                <!-- شريط البحث -->
-                <div class="p-4 bg-inherit sticky top-0 z-40">
-                    <div class="relative">
-                        <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 opacity-30 text-sm"></i>
-                        <input type="text" id="main-search" placeholder="ابحث في همم المجتمع..." class="w-full bg-gray-500/5 border-none rounded-2xl py-3 pr-11 pl-4 text-sm font-medium focus:ring-2 ring-[#006C48] transition-all" oninput="handleSearch(this.value)">
-                    </div>
-                </div>
-
-                <!-- صندوق النشر -->
-                <div class="px-5 pb-4 border-b border-gray-500/5">
+                <div class="p-4 border-b border-gray-500/5 bg-inherit">
                     <div class="flex gap-4">
-                        <img id="user-avatar-mini" src="" class="w-11 h-11 rounded-2xl bg-gray-100 shadow-sm object-cover cursor-pointer hover:opacity-80 transition" onclick="switchTab('profile')">
+                        <img id="user-avatar-mini" src="" class="w-11 h-11 rounded-2xl bg-gray-100 shadow-sm object-cover cursor-pointer" onclick="switchTab('profile')">
                         <div class="flex-1">
-                            <textarea id="post-input" placeholder="ما هي همتك اليوم؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium min-h-[50px] pt-2 no-scrollbar" oninput="autoResize(this)"></textarea>
-                            <div class="flex justify-between items-center mt-2 pt-2">
-                                <div class="flex gap-3 text-gray-400">
-                                    <button class="hover:text-[#006C48] transition-colors"><i class="far fa-image"></i></button>
-                                    <button class="hover:text-[#006C48] transition-colors"><i class="far fa-chart-bar"></i></button>
-                                    <button class="hover:text-[#006C48] transition-colors"><i class="far fa-calendar-alt"></i></button>
+                            <textarea id="post-input" placeholder="ما هي همتك اليوم؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium min-h-[60px] pt-2 outline-none"></textarea>
+                            <div class="flex justify-between items-center mt-2 border-t border-gray-500/5 pt-3">
+                                <div class="flex gap-4 text-[#006C48] text-xl">
+                                    <button class="hover:bg-gray-100 p-2 rounded-full transition"><i class="far fa-image"></i></button>
+                                    <button class="hover:bg-gray-100 p-2 rounded-full transition"><i class="far fa-smile"></i></button>
+                                    <button class="hover:bg-gray-100 p-2 rounded-full transition"><i class="fas fa-map-marker-alt"></i></button>
                                 </div>
-                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-6 py-2 rounded-xl font-black shadow-lg hover:brightness-110 active:scale-95 transition-all text-sm">نشر</button>
+                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-2 rounded-full font-black shadow-lg hover:brightness-110 active:scale-95 transition-all">نشر</button>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div id="main-feed" class="divide-y divide-gray-500/5 scroll-spacer"></div>
+            </section>
 
-                <!-- القصص (Stories) -->
-                <div class="flex gap-4 p-4 overflow-x-auto no-scrollbar bg-gray-500/[0.02] border-b border-gray-500/5">
-                    <div class="flex flex-col items-center gap-1 min-w-[65px]">
-                        <div class="w-14 h-14 rounded-2xl border-2 border-dashed border-[#006C48] flex items-center justify-center cursor-pointer hover:bg-[#006C48]/5 transition">
-                            <i class="fas fa-plus text-[#006C48]"></i>
+            <section id="view-live" class="view-content hidden h-full flex flex-col relative overflow-hidden bg-black">
+                <!-- Broadcasting Interface -->
+                <div id="broadcasting-ui" class="absolute inset-0 z-20 hidden flex flex-col">
+                    <video id="live-video-element" autoplay playsinline muted></video>
+                    <div class="live-overlay absolute inset-0 p-6 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-red-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-black flex items-center gap-1.5 animate-pulse shadow-lg">
+                                    <span class="w-2 h-2 bg-white rounded-full"></span> مباشر
+                                </div>
+                                <div class="bg-black/40 backdrop-blur-md text-white text-[10px] px-3 py-1.5 rounded-lg font-black flex items-center gap-1.5">
+                                    <i class="fas fa-eye"></i> <span id="live-viewer-count">0</span>
+                                </div>
+                            </div>
+                            <button onclick="endLiveStream()" class="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-red-500 transition">إنهاء</button>
                         </div>
-                        <span class="text-[9px] font-bold opacity-40">قصتك</span>
-                    </div>
-                    <div id="stories-list" class="flex gap-4">
-                        <!-- عينات قصص -->
-                        <div class="flex flex-col items-center gap-1 min-w-[65px]">
-                            <div class="w-14 h-14 rounded-2xl border-2 border-[#D4AF37] p-0.5"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sara" class="w-full h-full rounded-2xl object-cover bg-white"></div>
-                            <span class="text-[9px] font-bold opacity-60">سارة</span>
+
+                        <div class="flex-1 flex flex-col justify-end overflow-hidden pb-4">
+                            <div id="live-chat-messages" class="space-y-2 max-h-56 overflow-y-auto no-scrollbar pointer-events-none transition-all">
+                                <!-- Messages will appear here -->
+                            </div>
                         </div>
-                        <div class="flex flex-col items-center gap-1 min-w-[65px]">
-                            <div class="w-14 h-14 rounded-2xl border-2 border-[#006C48] p-0.5"><img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Faisal" class="w-full h-full rounded-2xl object-cover bg-white"></div>
-                            <span class="text-[9px] font-bold opacity-60">فيصل</span>
+
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 bg-white/10 backdrop-blur-xl rounded-2xl px-4 py-3 flex items-center border border-white/20">
+                                <input id="live-msg-input" type="text" placeholder="تفاعل مع البث..." class="bg-transparent border-none w-full text-white placeholder-white/50 text-sm focus:ring-0 outline-none">
+                                <button onclick="sendLiveChatMessage()"><i class="fas fa-paper-plane text-white hover:text-[#D4AF37] transition"></i></button>
+                            </div>
+                            <button onclick="spawnHeart()" class="w-12 h-12 bg-[#D4AF37] rounded-2xl flex items-center justify-center text-white text-xl shadow-lg active:scale-90 transition">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                            <button onclick="sendLionGift(userSession.full_name)" class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#D4AF37] text-xl shadow-lg active:scale-90 transition">
+                                <i class="fas fa-crown"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- التغذية الإخبارية (Feed) -->
-                <div id="main-feed" class="divide-y divide-gray-500/5 pb-24">
-                    <!-- Shimmer Loading -->
-                    <div class="p-6 opacity-20"><div class="h-4 w-1/2 bg-gray-400 rounded mb-4"></div><div class="h-20 bg-gray-400 rounded"></div></div>
+                <div id="live-lobby" class="flex flex-col items-center justify-center h-full p-10 text-center space-y-6">
+                    <div class="w-28 h-28 bg-[#006C48] rounded-[3rem] flex items-center justify-center shadow-[0_0_40px_rgba(0,108,72,0.5)] mb-4">
+                        <i class="fas fa-video text-white text-4xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-white text-3xl font-black mb-3">انطلق في بثك الأول!</h2>
+                        <p class="text-white/50 text-sm leading-relaxed">شارك شغفك، مهاراتك، أو رحلتك في طويق مع آلاف المستخدمين الآن.</p>
+                    </div>
+                    <button onclick="startLiveStream()" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-xl hover:brightness-110 active:scale-95 transition-all text-lg">ابدأ البث الآن 🇸🇦</button>
+                    
+                    <div class="w-full pt-10">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-white font-black text-sm">بثوث جارية</h3>
+                            <span class="text-[#D4AF37] text-[10px] font-black">مشاهدة الكل</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="aspect-[3/4] bg-gray-800 rounded-3xl overflow-hidden relative group cursor-pointer">
+                                <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=200" class="w-full h-full object-cover opacity-60">
+                                <div class="absolute inset-0 flex items-center justify-center"><i class="fas fa-play text-white/50 text-2xl"></i></div>
+                                <div class="absolute top-2 right-2 bg-red-600 text-white text-[8px] px-2 py-1 rounded font-bold">LIVE</div>
+                            </div>
+                            <div class="aspect-[3/4] bg-gray-800 rounded-3xl overflow-hidden relative group cursor-pointer">
+                                <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=200" class="w-full h-full object-cover opacity-60">
+                                <div class="absolute inset-0 flex items-center justify-center"><i class="fas fa-play text-white/50 text-2xl"></i></div>
+                                <div class="absolute top-2 right-2 bg-red-600 text-white text-[8px] px-2 py-1 rounded font-bold">LIVE</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- وجهة الملف الشخصي -->
-            <section id="view-profile" class="view-content hidden pb-24">
-                <div class="h-40 bg-gradient-to-br from-[#006C48] to-[#004d33] relative">
-                    <button class="absolute top-4 right-4 z-10 w-9 h-9 bg-black/20 text-white rounded-full flex items-center justify-center" onclick="switchTab('home')"><i class="fas fa-arrow-right"></i></button>
+            <!-- Profile View -->
+            <section id="view-profile" class="view-content hidden scroll-spacer">
+                <div class="h-44 bg-gradient-to-br from-[#006C48] to-[#004d33] relative">
                     <img src="https://images.unsplash.com/photo-1548013146-72479768b921?auto=format&fit=crop&w=800" class="w-full h-full object-cover opacity-30">
                 </div>
-                <div class="px-6 -mt-12 relative">
-                    <img id="profile-avatar-large" src="" class="w-24 h-24 rounded-[2rem] bg-white border-4 border-white shadow-2xl object-cover">
-                    <div class="mt-4 flex justify-between items-start">
-                        <div>
+                <div class="px-6 -mt-14 relative">
+                    <img id="profile-avatar-large" src="" class="w-28 h-28 rounded-[2.5rem] bg-white border-4 border-[#006C48] shadow-2xl object-cover">
+                    <div class="mt-4">
+                        <div class="flex items-center gap-2">
                             <h2 id="profile-name" class="text-2xl font-black">--</h2>
-                            <p id="profile-handle" class="text-[#006C48] font-bold text-sm">@--</p>
+                            <i class="fas fa-check-circle text-blue-500 text-sm"></i>
                         </div>
-                        <button onclick="handleLogout()" class="bg-red-500/10 text-red-500 text-[10px] font-black px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all">خروج</button>
+                        <p id="profile-handle" class="text-[#D4AF37] font-bold text-sm">@--</p>
                     </div>
-                    <div class="flex gap-8 mt-6 pb-6 border-b border-gray-500/5">
-                        <div class="text-center"><span class="block font-black text-lg">1.2K</span><span class="text-[9px] opacity-40 font-black uppercase">متابِع</span></div>
-                        <div class="text-center"><span class="block font-black text-lg">850</span><span class="text-[9px] opacity-40 font-black uppercase">يتابع</span></div>
-                        <div class="text-center"><span class="block font-black text-lg">34</span><span class="text-[9px] opacity-40 font-black uppercase">همة</span></div>
+                    <div class="mt-6 grid grid-cols-3 gap-4 border-b border-gray-500/5 pb-6">
+                        <div class="text-center"><span class="block font-black text-lg">1.2K</span><span class="text-[10px] opacity-40 font-black">متابع</span></div>
+                        <div class="text-center"><span class="block font-black text-lg">850</span><span class="text-[10px] opacity-40 font-black">يتابع</span></div>
+                        <div class="text-center"><span class="block font-black text-lg">24</span><span class="text-[10px] opacity-40 font-black">بث مباشر</span></div>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button onclick="handleLogout()" class="flex-1 bg-red-500/10 text-red-500 font-black py-3 rounded-2xl text-sm transition-all hover:bg-red-500 hover:text-white">تسجيل الخروج</button>
                     </div>
                 </div>
-                <div id="user-posts-feed" class="divide-y divide-gray-500/5"></div>
-            </section>
-
-            <!-- وجهة الترند -->
-            <section id="view-trends" class="view-content hidden p-6 pb-24">
-                <h2 class="text-2xl font-black mb-6">المتداول الآن 🇸🇦</h2>
-                <div class="space-y-4" id="trends-container"></div>
+                <div id="user-posts-feed" class="mt-6 divide-y divide-gray-500/5"></div>
             </section>
         </main>
 
-        <!-- التنقل السفلي -->
+        <!-- Navigation Bar -->
         <nav class="shrink-0 bg-inherit/90 backdrop-blur-xl border-t border-gray-500/10 flex justify-around items-center h-20 z-[100] px-2">
             <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1.5 flex-1 transition-all">
                 <i class="fas fa-house-chimney text-xl"></i>
                 <span class="text-[9px] font-black">الرئيسية</span>
             </button>
-            <button onclick="switchTab('trends')" id="nav-trends" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
-                <i class="fas fa-hashtag text-xl"></i>
-                <span class="text-[9px] font-black">اكتشف</span>
+            <button onclick="switchTab('live')" id="nav-live" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
+                <i class="fas fa-tower-broadcast text-xl"></i>
+                <span class="text-[9px] font-black">بث مباشر</span>
             </button>
             <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
                 <i class="fas fa-user-astronaut text-xl"></i>
@@ -258,7 +322,6 @@
     </div>
 
     <script>
-        // تكوين Supabase (استخدم مفاتيحك الخاصة)
         const SUPABASE_URL = 'https://cuaoopauabnmpmoddvby.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW9vcGF1YWJubXBtb2RkdmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjgyNDUsImV4cCI6MjA5MzIwNDI0NX0._vyBPMk3oaJqMJaBRY4DaKj2ZjSodKPxZ77kFiZUH9o';
         
@@ -267,271 +330,232 @@
 
         let userSession = null;
         let allPosts = [];
-        let likedPosts = JSON.parse(localStorage.getItem('tuwaiq_likes') || '[]');
+        let videoStream = null;
+        let chatInterval = null;
+        let viewers = 0;
 
-        window.onload = () => initApp();
-
-        async function initApp() {
-            const localUser = localStorage.getItem('tuwaiq_user');
-            if (localUser) {
-                userSession = JSON.parse(localUser);
-                showMainApp();
-            } else {
-                document.getElementById('view-login').classList.remove('hidden');
+        window.onload = () => {
+            const saved = localStorage.getItem('tuwaiq_user');
+            if (saved) {
+                userSession = JSON.parse(saved);
+                showApp();
             }
         }
 
         function handleLogin() {
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-setup').classList.remove('hidden');
+            showToast("جاري الربط مع حساب جوجل...");
+            setTimeout(() => {
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-setup').classList.remove('hidden');
+            }, 1000);
         }
 
-        function changeAvatar() {
-            const newSeed = Math.random();
-            const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${newSeed}`;
-            document.getElementById('setup-avatar').src = avatarUrl;
-        }
-
-        async function completeProfile() {
+        function completeProfile() {
             const name = document.getElementById('setup-name').value.trim();
-            const username = document.getElementById('setup-username').value.trim().toLowerCase();
-            const avatar = document.getElementById('setup-avatar').src;
-
-            if (!name || !username) return showToast("يرجى ملء جميع الحقول");
-            if (!/^[a-z0-9_]+$/.test(username)) return showToast("اسم المستخدم غير صالح");
-
-            userSession = { id: Date.now(), full_name: name, username: username, avatar_url: avatar };
+            const username = document.getElementById('setup-username').value.trim();
+            if (!name || !username) return showToast("فضلاً أكمل بياناتك");
+            
+            userSession = {
+                id: 'tuwaiq_' + Math.random().toString(36).substr(2, 5),
+                full_name: name,
+                username: username,
+                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+            };
             localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
-            showMainApp();
+            showApp();
         }
 
-        function showMainApp() {
+        function showApp() {
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-setup').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
-            
             document.getElementById('user-avatar-mini').src = userSession.avatar_url;
-            updateProfileUI();
-            
+            document.getElementById('profile-avatar-large').src = userSession.avatar_url;
+            document.getElementById('profile-name').innerText = userSession.full_name;
+            document.getElementById('profile-handle').innerText = '@' + userSession.username;
             loadPosts();
             setupRealtime();
-            loadTrends();
         }
 
-        async function loadPosts() {
-            const { data, error } = await _supabase
-                .from('posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (!error) {
-                allPosts = data;
-                renderPosts(allPosts, 'main-feed');
+        async function startLiveStream() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: true 
+                });
+                const videoElement = document.getElementById('live-video-element');
+                videoElement.srcObject = videoStream;
+                
+                document.getElementById('live-lobby').classList.add('hidden');
+                document.getElementById('broadcasting-ui').classList.remove('hidden');
+                document.getElementById('app-header').classList.add('hidden'); 
+                
+                startSimulatedChat();
+                showToast("أنت الآن مباشر! 🦁🇸🇦");
+            } catch (err) {
+                console.error(err);
+                showToast("خطأ: لم نتمكن من الوصول للكاميرا");
             }
         }
 
-        /**
-         * STREAMING_CHUNK:Setting up Realtime Listeners...
-         * هذه هي الوظيفة الأهم التي تجعل التطبيق "مباشراً"
-         */
-        function setupRealtime() {
-            _supabase
-                .channel('public:posts')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, (payload) => {
-                    console.log('تغيير مباشر:', payload);
-                    
-                    if (payload.eventType === 'INSERT') {
-                        allPosts.unshift(payload.new);
-                    } 
-                    else if (payload.eventType === 'UPDATE') {
-                        const index = allPosts.findIndex(p => p.id === payload.new.id);
-                        if (index !== -1) allPosts[index] = payload.new;
-                    }
-                    else if (payload.eventType === 'DELETE') {
-                        allPosts = allPosts.filter(p => p.id !== payload.old.id);
-                    }
+        function endLiveStream() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('live-lobby').classList.remove('hidden');
+            document.getElementById('broadcasting-ui').classList.add('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+            clearInterval(chatInterval);
+            viewers = 0;
+            document.getElementById('live-chat-messages').innerHTML = '';
+        }
 
-                    // تحديث الواجهة فوراً
-                    renderPosts(allPosts, 'main-feed');
-                    if (!document.getElementById('view-profile').classList.contains('hidden')) {
-                        updateProfilePosts();
+        function startSimulatedChat() {
+            const msgs = ["منور يا بطل!", "همة عالية 🇸🇦", "ما شاء الله تبارك الله", "كفوووو", "تحية من الرياض!", "أطلق بث لليوم", "🔥🔥🔥", "أسد طويق!", "كيف سجلت في الدورة؟"];
+            const names = ["سارة", "خالد", "محمد", "نورة", "عبدالعزيز", "فهد", "ريم", "عمر"];
+            
+            chatInterval = setInterval(() => {
+                viewers += Math.floor(Math.random() * 8);
+                document.getElementById('live-viewer-count').innerText = viewers.toLocaleString();
+                
+                if(Math.random() > 0.5) {
+                    const chatBox = document.getElementById('live-chat-messages');
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = "text-white text-xs bg-black/40 p-2.5 rounded-xl backdrop-blur-sm border border-white/5 animate-fade-in inline-block max-w-[80%]";
+                    msgDiv.innerHTML = `<span class="font-black text-[#D4AF37] block mb-0.5">${names[Math.floor(Math.random() * names.length)]}</span> ${msgs[Math.floor(Math.random() * msgs.length)]}`;
+                    chatBox.appendChild(msgDiv);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+                
+                if(Math.random() > 0.8) spawnHeart();
+            }, 1200);
+        }
+
+        function sendLiveChatMessage() {
+            const input = document.getElementById('live-msg-input');
+            if (!input.value.trim()) return;
+            const chatBox = document.getElementById('live-chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "text-white text-xs bg-[#006C48]/60 p-2.5 rounded-xl backdrop-blur-sm border border-white/10 animate-fade-in self-end";
+            msgDiv.innerHTML = `<span class="font-black text-white block mb-0.5">أنت (أنا)</span> ${input.value}`;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            input.value = "";
+        }
+
+        function spawnHeart() {
+            const container = document.getElementById('view-live');
+            const heart = document.createElement('div');
+            const colors = ['text-red-500', 'text-[#D4AF37]', 'text-pink-500', 'text-white'];
+            heart.className = `heart-animation ${colors[Math.floor(Math.random()*colors.length)]} text-2xl`;
+            heart.innerHTML = '<i class="fas fa-heart"></i>';
+            heart.style.right = (20 + Math.random() * 40) + 'px';
+            container.appendChild(heart);
+            setTimeout(() => heart.remove(), 2000);
+        }
+
+        async function loadPosts() {
+            const { data } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
+            if (data) {
+                allPosts = data.filter(p => !p.content.startsWith("SIGNAL_"));
+                renderPosts(allPosts);
+            }
+        }
+
+        function setupRealtime() {
+            _supabase.channel('public:posts')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, payload => {
+                    if (payload.new.content.includes("SIGNAL_LION_GIFT")) {
+                        triggerLionGift(payload.new.content.split(':')[1]);
+                    } else {
+                        allPosts.unshift(payload.new);
+                        renderPosts(allPosts);
                     }
-                })
-                .subscribe();
+                }).subscribe();
         }
 
         async function publishPost() {
             const input = document.getElementById('post-input');
             const content = input.value.trim();
             if (!content) return;
-
-            const btn = event.target;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
-
             const { error } = await _supabase.from('posts').insert([{
-                content: content,
-                author_name: userSession.full_name,
-                author_avatar: userSession.avatar_url,
-                username: userSession.username,
-                likes: 0
+                content: content, author_name: userSession.full_name, author_avatar: userSession.avatar_url,
+                username: userSession.username, likes: 0
             }]);
-
-            btn.disabled = false;
-            btn.innerText = 'نشر';
-
-            if (!error) {
-                input.value = "";
-                input.style.height = "auto";
-                showToast("تم نشر همّتك بنجاح 🇸🇦");
-            } else {
-                showToast("حدث خطأ في النشر");
-            }
+            if (!error) { input.value = ""; showToast("تم النشر بنجاح! 🇸🇦"); loadPosts(); }
         }
 
-        async function handleLike(postId) {
-            const post = allPosts.find(p => p.id === postId);
-            if (!post) return;
-
-            const isLiked = likedPosts.includes(postId);
-            const newLikesCount = isLiked ? Math.max(0, (post.likes || 0) - 1) : (post.likes || 0) + 1;
-
-            if (isLiked) {
-                likedPosts = likedPosts.filter(id => id !== postId);
-            } else {
-                likedPosts.push(postId);
-            }
-            localStorage.setItem('tuwaiq_likes', JSON.stringify(likedPosts));
-
-            // تحديث قاعدة البيانات - سيقوم Realtime بتحديث الواجهة لكل المستخدمين
-            await _supabase
-                .from('posts')
-                .update({ likes: newLikesCount })
-                .eq('id', postId);
-        }
-
-        function renderPosts(posts, containerId) {
-            const container = document.getElementById(containerId);
-            if (!posts.length) {
-                container.innerHTML = `<div class="p-20 text-center opacity-20 font-black">كن أول من ينشر همته اليوم!</div>`;
-                return;
-            }
-
-            container.innerHTML = posts.map(post => {
-                const isLiked = likedPosts.includes(post.id);
-                return `
-                    <div class="p-5 post-card bg-inherit border-b border-gray-500/5">
-                        <div class="flex gap-3 mb-3">
-                            <img src="${post.author_avatar}" class="w-11 h-11 rounded-2xl bg-gray-100 object-cover shadow-sm">
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="font-black text-sm flex items-center gap-1.5">
-                                        ${post.author_name}
-                                        <i class="fas fa-check-circle text-blue-500 text-[10px]"></i>
-                                    </h4>
-                                    <span class="text-[9px] opacity-40 font-bold">${formatTime(post.created_at)}</span>
-                                </div>
-                                <p class="text-[10px] text-[#006C48] font-bold">@${post.username}</p>
-                            </div>
-                        </div>
-                        <p class="text-[15px] mb-4 leading-relaxed font-medium">${post.content}</p>
-                        <div class="flex gap-8 text-gray-400">
-                            <button onclick="handleLike('${post.id}')" class="flex items-center gap-2 hover:text-red-500 transition-colors ${isLiked ? 'liked-heart' : ''}">
-                                <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
-                                <span class="text-xs font-black">${post.likes || 0}</span>
-                            </button>
-                            <button onclick="showToast('سيتم إضافة الردود قريباً')" class="flex items-center gap-2 hover:text-[#006C48]">
-                                <i class="far fa-comment"></i>
-                                <span class="text-xs font-black">0</span>
-                            </button>
-                            <button class="mr-auto opacity-30"><i class="fas fa-share-nodes"></i></button>
+        function renderPosts(posts) {
+            document.getElementById('main-feed').innerHTML = posts.map(post => `
+                <div class="p-5 bg-inherit border-b border-gray-500/5 hover:bg-gray-50 transition">
+                    <div class="flex gap-3 mb-3">
+                        <img src="${post.author_avatar}" class="w-11 h-11 rounded-2xl bg-gray-100 object-cover shadow-sm">
+                        <div class="flex-1">
+                            <h4 class="font-black text-sm">${post.author_name}</h4>
+                            <p class="text-[10px] text-[#006C48] font-bold">@${post.username}</p>
                         </div>
                     </div>
-                `;
-            }).join('');
+                    <p class="text-[15px] mb-4 leading-relaxed font-medium">${post.content}</p>
+                    <div class="flex gap-8 text-gray-400">
+                        <button class="flex items-center gap-2 hover:text-red-500 transition"><i class="far fa-heart"></i><span class="text-xs font-black">${post.likes || 0}</span></button>
+                        <button onclick="sendLionGift('${userSession.full_name}')" class="flex items-center gap-2 text-[#D4AF37] hover:scale-105 transition"><i class="fas fa-crown"></i><span class="text-xs font-black">أرسل أسد</span></button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
+        async function sendLionGift(sender) {
+            showToast("جاري إطلاق أسد طويق... 🦁");
+            await _supabase.from('posts').insert([{ content: `SIGNAL_LION_GIFT:${sender}`, author_name: "SYSTEM", username: "system" }]);
+        }
+
+        function triggerLionGift(sender) {
+            const overlay = document.getElementById('gift-overlay');
+            const app = document.getElementById('app');
+            document.getElementById('sender-name-label').innerText = `من: ${sender}`;
+            overlay.classList.remove('hidden');
+            app.classList.add('shake');
+            
+            // Particles
+            for(let i=0; i<80; i++) {
+                const p = document.createElement('div');
+                p.className = 'gold-particle';
+                const size = Math.random() * 15 + 5;
+                p.style.width = size + 'px'; p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + 'vw'; p.style.top = '-20px';
+                p.style.animationDuration = (Math.random() * 2.5 + 1) + 's';
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 3500);
+            }
+            
+            setTimeout(() => { 
+                overlay.classList.add('hidden'); 
+                app.classList.remove('shake'); 
+            }, 4000);
         }
 
         function switchTab(tab) {
+            if (tab !== 'live') endLiveStream();
             document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
             document.getElementById(`view-${tab}`).classList.remove('hidden');
-            
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-gray-400'));
-            const activeBtn = document.getElementById(`nav-${tab}`);
-            if (activeBtn) activeBtn.classList.add('nav-active');
-            else document.querySelectorAll('nav button').forEach(b => b.classList.add('text-gray-400'));
-
-            if (tab === 'profile') updateProfilePosts();
-            document.getElementById('app-main').scrollTop = 0;
-        }
-
-        function updateProfileUI() {
-            document.getElementById('profile-avatar-large').src = userSession.avatar_url;
-            document.getElementById('profile-name').innerText = userSession.full_name;
-            document.getElementById('profile-handle').innerText = `@${userSession.username}`;
-        }
-
-        function updateProfilePosts() {
-            const userPosts = allPosts.filter(p => p.username === userSession.username);
-            renderPosts(userPosts, 'user-posts-feed');
-        }
-
-        function handleSearch(query) {
-            const q = query.toLowerCase().trim();
-            if (!q) return renderPosts(allPosts, 'main-feed');
-            const filtered = allPosts.filter(p => p.content.toLowerCase().includes(q) || p.author_name.toLowerCase().includes(q));
-            renderPosts(filtered, 'main-feed');
+            document.getElementById(`nav-${tab}`).classList.add('nav-active');
         }
 
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
-            const icon = document.getElementById('theme-icon');
-            icon.className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon';
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('theme-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
         }
 
-        function formatTime(dateStr) {
-            const diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
-            if (diff < 60) return "الآن";
-            if (diff < 3600) return `${Math.floor(diff/60)}د`;
-            if (diff < 86400) return `${Math.floor(diff/3600)}س`;
-            return new Date(dateStr).toLocaleDateString('ar-SA');
-        }
+        function handleLogout() { localStorage.removeItem('tuwaiq_user'); location.reload(); }
 
         function showToast(msg) {
             const t = document.createElement('div');
-            t.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-6 py-3 rounded-2xl text-sm font-black shadow-2xl z-[2000] transition-all";
+            t.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-6 py-4 rounded-2xl text-xs font-black shadow-2xl z-[6000] transition-all transform scale-110";
             t.innerText = msg;
             document.body.appendChild(t);
-            setTimeout(() => {
-                t.style.opacity = '0';
-                t.style.transform = 'translate(-50%, -20px)';
-                setTimeout(() => t.remove(), 500);
-            }, 2500);
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('tuwaiq_user');
-            window.location.reload();
-        }
-
-        function loadTrends() {
-            const trends = [
-                { tag: "#رؤية_السعودية_2030", count: "1.2M", desc: "ترند وطني" },
-                { tag: "#نيوم", count: "850K", desc: "مشاريع" },
-                { tag: "#طويق_التقنية", count: "500K", desc: "تعليم" },
-                { tag: "#يوم_التأسيس", count: "2.1M", desc: "تاريخ" }
-            ];
-            document.getElementById('trends-container').innerHTML = trends.map(t => `
-                <div class="p-4 bg-gray-500/5 rounded-2xl hover:bg-gray-500/10 transition cursor-pointer">
-                    <p class="text-[10px] opacity-40 font-bold mb-1">${t.desc}</p>
-                    <h3 class="font-black text-lg">${t.tag}</h3>
-                    <p class="text-[10px] text-[#006C48] font-bold mt-1">${t.count} همة</p>
-                </div>
-            `).join('');
+            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'scale(0.8) translateX(-50%)'; setTimeout(() => t.remove(), 500); }, 2500);
         }
     </script>
 </body>
