@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>منصة طويق | Tuwaiq Platform</title>
+    <title>طويق | إدارة الحساب</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,327 +12,428 @@
     <style>
         :root {
             --saudi-green: #006C48;
+            --saudi-green-dark: #004d33;
             --saudi-gold: #D4AF37;
             --bg-main: #f8faf8;
             --card-bg: #ffffff;
             --text-main: #0a0a0a;
+            --accent-soft: rgba(0, 108, 72, 0.05);
         }
         
         .dark-mode {
             --bg-main: #050705;
-            --card-bg: #0f130f;
+            --card-bg: #121612;
             --text-main: #f0f0f0;
+            --accent-soft: rgba(255, 255, 255, 0.03);
         }
 
         body {
             font-family: 'Tajawal', sans-serif;
-            background-color: #e5e7eb;
+            background-color: #f3f4f6;
             color: var(--text-main);
-            transition: all 0.3s ease;
+            transition: background 0.3s ease;
             margin: 0;
-            padding: 0;
             overflow: hidden;
         }
 
         .app-container {
             background-color: var(--bg-main);
-            max-width: 450px;
+            max-width: 500px;
             margin: 0 auto;
             height: 100vh;
-            height: 100dvh;
             position: relative;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .nav-active { color: var(--saudi-green) !important; font-weight: 900; }
+        .nav-active i { transform: translateY(-4px); }
         
         main {
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            background-color: inherit;
         }
 
-        .scroll-spacer { padding-bottom: 120px; }
-
-        .search-bar-container {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            background: inherit;
-            padding: 10px 15px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .search-input {
-            width: 100%;
-            background-color: rgba(128, 128, 128, 0.1);
-            border: none;
-            border-radius: 99px;
-            padding: 10px 45px 10px 15px;
-            font-size: 0.9rem;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .search-input:focus {
-            background-color: transparent;
-            box-shadow: 0 0 0 2px var(--saudi-green);
-        }
-
-        .search-icon {
+        .settings-menu {
             position: absolute;
-            right: 30px;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: 0.4;
+            top: 65px;
+            left: 20px;
+            width: 240px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+            border: 1px solid rgba(0,108,72,0.1);
+            backdrop-filter: blur(15px);
+        }
+        .settings-menu.show { display: block; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.9) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        .liked { color: #ef4444 !important; }
-        .retweeted { color: #10b981 !important; }
+        .profile-tab-active {
+            color: var(--saudi-green);
+            position: relative;
+        }
+        .profile-tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            right: 25%;
+            height: 3px;
+            background: var(--saudi-green);
+            border-radius: 10px;
+        }
+
+        .post-card {
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .post-card:active { background: var(--accent-soft); }
+
+        #avatar-input { display: none; }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .dark-mode .glass-effect {
+            background: rgba(18, 22, 18, 0.85);
+        }
+
+        .input-field {
+            width: 100%;
+            background: rgba(0,0,0,0.03);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 14px 16px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .dark-mode .input-field { background: rgba(255,255,255,0.05); }
+        .input-field:focus {
+            border-color: var(--saudi-green);
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,108,72,0.08);
+        }
+        .dark-mode .input-field:focus { background: #1a1f1a; }
     </style>
 </head>
 <body>
 
+    <!-- Login View -->
     <div id="view-login" class="fixed inset-0 z-[999] bg-[#006C48] flex flex-col items-center justify-center p-8 text-center">
-        <div class="mb-10 text-white">
+        <div class="mb-12 text-white animate-pulse text-center">
             <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl mx-auto mb-6">
                 <i class="fas fa-mountain text-[#006C48] text-4xl"></i>
             </div>
             <h1 class="text-3xl font-black mb-2">منصة طويق</h1>
-            <p class="text-white/70 font-medium italic">همة تعانق السماء 🇸🇦</p>
+            <p class="text-white/80 font-medium">همة تعانق السماء 🇸🇦</p>
         </div>
-        <button onclick="handleLogin()" class="w-full max-w-xs bg-white text-gray-900 font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-4 shadow-xl hover:scale-105 transition-transform active:scale-95">
-            <img src="https://www.google.com/favicon.ico" class="w-6 h-6">
-            تسجيل الدخول عبر جوجل
+        <button onclick="handleLogin()" class="w-full max-w-xs bg-white text-gray-900 font-black py-4 px-6 rounded-2xl flex items-center justify-center gap-4 shadow-xl hover:brightness-95 transition">
+            <img src="https://www.google.com/favicon.ico" class="w-6 h-6" alt="Google">
+            دخول سريع للمعاينة
         </button>
     </div>
 
-    <div id="view-setup" class="fixed inset-0 z-[998] bg-white flex flex-col p-8 hidden overflow-y-auto text-gray-900">
-        <h2 class="text-2xl font-black mb-2">إكمال ملفك الشخصي</h2>
-        <p class="text-gray-400 text-sm mb-8">لنتمكن من تخصيص تجربتك في طويق</p>
-        <div class="space-y-6">
-            <div class="flex justify-center mb-6">
-                <div class="relative">
-                    <img id="setup-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Tuwaiq" class="w-24 h-24 rounded-3xl bg-gray-100 border-4 border-[#006C48]/20 object-cover">
+    <!-- Enhanced Profile Edit Modal -->
+    <div id="modal-edit-profile" class="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-[#121612] w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl transition-all border border-white/10 overflow-y-auto max-h-[90vh] no-scrollbar">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black">إعدادات الحساب</h3>
+                <button onclick="closeEditModal()" class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="space-y-5">
+                <!-- Avatar Section -->
+                <div class="flex flex-col items-center gap-2 mb-2">
+                    <div class="relative group" onclick="document.getElementById('avatar-input').click()">
+                        <img id="edit-avatar-preview" src="" class="w-24 h-24 rounded-[2rem] object-cover border-4 border-[#006C48] shadow-xl">
+                        <div class="absolute inset-0 bg-black/40 rounded-[2rem] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                            <i class="fas fa-camera text-white"></i>
+                        </div>
+                        <input type="file" id="avatar-input" accept="image/*" onchange="handleImageUpload(event)">
+                    </div>
+                    <p class="text-[10px] font-black opacity-40 uppercase tracking-widest">تحديث الصورة</p>
+                </div>
+
+                <!-- Name (Required) -->
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-black px-1 opacity-50 uppercase tracking-tighter">الاسم الكامل (إلزامي)</label>
+                    <input type="text" id="edit-name" placeholder="أدخل اسمك" class="input-field">
+                </div>
+
+                <!-- Bio (Optional) -->
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-black px-1 opacity-50 uppercase tracking-tighter">النبذة التعريفية (اختياري)</label>
+                    <textarea id="edit-bio" placeholder="من أنت؟" class="input-field h-24 resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Location (Optional) -->
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-black px-1 opacity-50 uppercase tracking-tighter">المنطقة (اختياري)</label>
+                        <input type="text" id="edit-location" placeholder="مثلاً: الرياض" class="input-field">
+                    </div>
+                    <!-- Birthday (Optional) -->
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-black px-1 opacity-50 uppercase tracking-tighter">ميلادك (اختياري)</label>
+                        <input type="date" id="edit-birthday" class="input-field">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button onclick="closeEditModal()" class="flex-1 bg-gray-100 dark:bg-white/5 py-4 rounded-2xl font-black text-sm">إلغاء</button>
+                    <button onclick="saveProfileChanges()" class="flex-[2] bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#006C48]/20 text-sm">حفظ التغييرات</button>
                 </div>
             </div>
-            <div>
-                <label class="text-xs font-black opacity-40 block mb-2 mr-1">الاسم الكامل</label>
-                <input type="text" id="setup-name" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900">
-            </div>
-            <div>
-                <label class="text-xs font-black opacity-40 block mb-2 mr-1">اسم المستخدم (English Only)</label>
-                <div class="relative">
-                    <input type="text" id="setup-username" placeholder="e.g. tuwaiq_hero" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900">
-                    <span id="username-status" class="absolute left-4 top-1/2 -translate-y-1/2 text-[10px]"></span>
-                </div>
-            </div>
-            <div>
-                <label class="text-xs font-black opacity-40 block mb-2 mr-1">العمر</label>
-                <input type="number" id="setup-age" class="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold focus:ring-2 ring-[#006C48] text-gray-900">
-            </div>
-            <button onclick="completeProfile()" id="btn-save-profile" class="w-full bg-[#006C48] text-white font-black py-4 rounded-2xl shadow-lg mt-4 disabled:opacity-50">حفظ ودخول المنصة</button>
         </div>
     </div>
 
+    <!-- Main App -->
     <div id="app" class="app-container hidden">
-        <header class="shrink-0 bg-inherit/80 backdrop-blur-md border-b border-gray-500/5 px-6 py-4 flex justify-between items-center z-50">
+        <header class="shrink-0 bg-inherit/90 glass-effect px-6 py-4 flex justify-between items-center z-[60] border-b border-gray-500/5">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-[#006C48] rounded-xl flex items-center justify-center shadow-md">
+                <div class="w-10 h-10 bg-[#006C48] rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
                     <i class="fas fa-mountain text-white text-sm"></i>
                 </div>
-                <h1 class="text-lg font-black tracking-tight">طويق</h1>
+                <h1 class="text-xl font-black tracking-tighter">طويق</h1>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="toggleDarkMode()" class="text-lg opacity-40 hover:opacity-100"><i id="theme-icon" class="fas fa-moon"></i></button>
-                <button class="text-lg opacity-40 hover:opacity-100"><i class="far fa-bell"></i></button>
+            <div class="flex items-center gap-4 relative">
+                <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-xl bg-gray-500/5 flex items-center justify-center text-lg opacity-80 transition"><i id="theme-icon" class="fas fa-moon"></i></button>
+                <button onclick="toggleSettings()" class="w-10 h-10 rounded-xl bg-gray-500/5 flex items-center justify-center text-lg opacity-80 transition"><i class="fas fa-ellipsis-v"></i></button>
+                
+                <div id="settings-menu" class="settings-menu">
+                    <button onclick="openEditModal()" class="w-full text-right px-6 py-4 hover:bg-gray-100 dark:hover:bg-white/5 border-b border-gray-500/5 flex items-center justify-between font-bold">
+                        <span>إعدادات الملف</span>
+                        <i class="fas fa-user-gear text-xs opacity-40"></i>
+                    </button>
+                    <button onclick="handleLogout()" class="w-full text-right px-6 py-4 hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 flex items-center justify-between font-bold text-sm">
+                        <span>تسجيل الخروج</span>
+                        <i class="fas fa-power-off text-xs opacity-60"></i>
+                    </button>
+                </div>
             </div>
         </header>
 
         <main class="no-scrollbar">
+            <!-- Home Feed -->
             <section id="view-home" class="view-content">
-                <div class="search-bar-container">
-                    <div class="relative">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" id="main-search" placeholder="ابحث عن تغريدة، شخص، أو همة..." class="search-input" oninput="handleSearch(this.value)">
+                <div class="p-4">
+                    <div class="relative group">
+                        <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 opacity-30"></i>
+                        <input type="text" placeholder="ماذا يدور في خاطرك؟" class="w-full bg-gray-500/5 rounded-2xl py-4 pr-12 pl-4 text-sm font-bold outline-none border-2 border-transparent focus:border-[#006C48]/20 transition">
                     </div>
                 </div>
 
-                <div class="p-4 border-b border-gray-500/5 bg-inherit">
+                <div class="px-5 py-6 border-b border-gray-500/5">
                     <div class="flex gap-4">
-                        <img id="user-avatar-mini" src="" class="w-11 h-11 rounded-2xl bg-gray-100 shadow-sm object-cover cursor-pointer" onclick="switchTab('profile')">
+                        <img id="user-avatar-mini" src="" class="w-12 h-12 rounded-2xl object-cover border-2 border-white dark:border-white/10" onclick="switchTab('profile')">
                         <div class="flex-1">
-                            <textarea id="post-input" placeholder="ما هي همتك اليوم؟ 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium min-h-[60px] pt-2" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
-                            <div class="flex justify-between items-center mt-2 border-t border-gray-500/5 pt-3">
-                                <div class="flex gap-4 text-[#006C48] text-xl">
-                                    <label class="cursor-pointer hover:bg-gray-100 p-2 rounded-full transition">
-                                        <i class="far fa-image"></i>
-                                        <input type="file" id="post-image-upload" class="hidden" accept="image/*">
-                                    </label>
-                                    <button class="hover:bg-gray-100 p-2 rounded-full transition"><i class="far fa-smile"></i></button>
+                            <textarea id="post-input" placeholder="اكتب همتك اليوم.. 🇸🇦" class="w-full bg-transparent border-none resize-none focus:ring-0 text-lg font-medium pt-2 h-14 overflow-hidden" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                            <div class="flex justify-between items-center mt-3">
+                                <div class="flex gap-3">
+                                    <button class="text-[#006C48] opacity-40 hover:opacity-100 transition"><i class="far fa-image text-lg"></i></button>
+                                    <button class="text-[#006C48] opacity-40 hover:opacity-100 transition"><i class="far fa-smile text-lg"></i></button>
                                 </div>
-                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-2 rounded-full font-black shadow-lg hover:brightness-110 active:scale-95 transition-all">نشر</button>
+                                <button onclick="publishPost()" class="bg-[#006C48] text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-[#006C48]/30 hover:scale-105 active:scale-95 transition-all">نشر</button>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="flex gap-4 p-4 overflow-x-auto no-scrollbar bg-gray-500/[0.02] border-b border-gray-500/5 shrink-0">
-                    <div class="flex flex-col items-center gap-1 min-w-[70px]">
-                        <input type="file" id="story-file" class="hidden" accept="image/*" onchange="uploadStory(this)">
-                        <div onclick="document.getElementById('story-file').click()" class="w-16 h-16 rounded-2xl border-2 border-dashed border-[#006C48] flex items-center justify-center cursor-pointer hover:bg-[#006C48]/5 transition">
-                            <i class="fas fa-plus text-[#006C48]"></i>
-                        </div>
-                        <span class="text-[10px] font-bold">قصتك</span>
-                    </div>
-                    <div id="stories-list" class="flex gap-4"></div>
-                </div>
-
-                <div id="main-feed" class="divide-y divide-gray-500/5 scroll-spacer"></div>
+                <div id="main-feed" class="divide-y divide-gray-500/5 pb-32"></div>
             </section>
 
-            <section id="view-profile" class="view-content hidden scroll-spacer">
-                <div class="h-44 bg-gradient-to-br from-[#006C48] to-[#004d33] relative">
-                    <button id="back-to-feed" class="absolute top-4 right-4 z-10 w-10 h-10 bg-black/20 text-white rounded-full hidden" onclick="closeUserProfile()"><i class="fas fa-arrow-right"></i></button>
-                    <img src="https://images.unsplash.com/photo-1548013146-72479768b921?auto=format&fit=crop&w=800" class="w-full h-full object-cover opacity-30">
+            <!-- Profile View -->
+            <section id="view-profile" class="view-content hidden pb-32">
+                <div class="h-48 bg-gradient-to-br from-[#006C48] to-[#004d33] relative">
+                    <img id="profile-banner" src="https://images.unsplash.com/photo-1548013146-72479768b921?auto=format&fit=crop&w=1200" class="w-full h-full object-cover opacity-40">
                 </div>
-                <div class="px-6 -mt-14 relative">
-                    <img id="profile-avatar-large" src="" class="w-28 h-28 rounded-[2.5rem] bg-white border-4 border-[#006C48] shadow-2xl object-cover">
+                
+                <div class="px-6 -mt-14 relative z-10">
+                    <div class="relative inline-block">
+                        <img id="profile-avatar-large" src="" class="w-28 h-28 rounded-[2.5rem] bg-white border-[6px] border-white dark:border-[#121612] shadow-2xl object-cover">
+                        <div class="absolute bottom-1 left-1 w-7 h-7 bg-[#D4AF37] rounded-full border-4 border-white dark:border-[#121612] flex items-center justify-center text-[8px] text-white">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    
                     <div class="mt-4">
                         <div class="flex items-center gap-2">
-                            <h2 id="profile-name" class="text-2xl font-black">--</h2>
-                            <i class="fas fa-check-circle text-blue-500 text-sm"></i>
+                            <h2 id="profile-name" class="text-2xl font-black tracking-tight">--</h2>
+                            <i class="fas fa-circle-check text-[#006C48] text-sm"></i>
                         </div>
-                        <p id="profile-handle" class="text-[#D4AF37] font-bold text-sm">@--</p>
+                        <p id="profile-handle" class="text-[#006C48] font-black text-sm opacity-60">@--</p>
+                        <p id="profile-bio" class="mt-4 text-[15px] font-medium opacity-80 leading-relaxed">--</p>
+                        
+                        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-[12px] opacity-50 font-bold">
+                            <span id="display-location"><i class="fas fa-map-marker-alt ml-2"></i>--</span>
+                            <span id="display-birthday"><i class="fas fa-cake-candles ml-2"></i>--</span>
+                            <span><i class="far fa-calendar-alt ml-2"></i>انضم في مايو 2024</span>
+                        </div>
                     </div>
-                    <div class="flex gap-6 mt-6 pb-6 border-b border-gray-500/5">
-                        <div class="text-center"><span id="count-followers" class="block font-black text-lg">850</span><span class="text-[10px] opacity-40 font-black">متابِع</span></div>
-                        <div class="text-center"><span id="count-following" class="block font-black text-lg">1.2K</span><span class="text-[10px] opacity-40 font-black">يتابعني</span></div>
-                    </div>
-                    <div id="profile-actions-box" class="mt-4 flex gap-2">
-                        <button id="logout-btn" onclick="handleLogout()" class="flex-1 bg-red-500/10 text-red-500 font-black py-3 rounded-2xl text-sm transition-all hover:bg-red-500 hover:text-white">تسجيل الخروج</button>
+
+                    <div class="flex gap-10 mt-8 py-5 border-y border-gray-500/5">
+                        <div class="text-center">
+                            <div class="font-black text-lg">1.2K</div>
+                            <div class="text-[9px] opacity-40 font-black uppercase tracking-widest">متابِع</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-black text-lg">850</div>
+                            <div class="text-[9px] opacity-40 font-black uppercase tracking-widest">يتابع</div>
+                        </div>
+                        <div class="text-center">
+                            <div id="stats-posts-count" class="font-black text-lg">0</div>
+                            <div class="text-[9px] opacity-40 font-black uppercase tracking-widest">منشور</div>
+                        </div>
                     </div>
                 </div>
-                <div id="user-posts-feed" class="mt-6 divide-y divide-gray-500/5"></div>
-            </section>
 
-            <section id="view-trends" class="view-content hidden p-6 scroll-spacer">
-                <h2 class="text-2xl font-black mb-6">المتداول الآن 🇸🇦</h2>
-                <div class="space-y-6" id="trends-container"></div>
-            </section>
-
-            <section id="view-live" class="view-content hidden p-6 scroll-spacer">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-2xl font-black">بث مباشر</h2>
-                    <button onclick="showToast('سيتم التفعيل قريباً!')" class="bg-red-600 text-white px-5 py-2 rounded-xl font-black text-xs shadow-xl flex items-center gap-2">
-                        <i class="fas fa-video"></i> فتح بث جديد
-                    </button>
+                <div class="flex border-b border-gray-500/5 sticky top-0 bg-inherit/90 glass-effect z-20 mt-4">
+                    <button onclick="setProfileTab('my-tweets')" id="tab-my-tweets" class="flex-1 py-4 text-xs font-black transition-all profile-tab-active uppercase tracking-widest">المنشورات</button>
+                    <button onclick="setProfileTab('my-media')" id="tab-my-media" class="flex-1 py-4 text-xs font-black transition-all opacity-30 uppercase tracking-widest">الوسائط</button>
+                    <button onclick="setProfileTab('my-likes')" id="tab-my-likes" class="flex-1 py-4 text-xs font-black transition-all opacity-30 uppercase tracking-widest">الإعجابات</button>
                 </div>
-                <div id="live-container" class="grid grid-cols-1 gap-6"></div>
+                
+                <div id="user-posts-feed" class="divide-y divide-gray-500/5"></div>
             </section>
         </main>
 
-        <nav class="shrink-0 bg-inherit/90 backdrop-blur-xl border-t border-gray-500/10 flex justify-around items-center h-20 z-[100] px-2">
-            <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1.5 flex-1 transition-all">
+        <nav class="shrink-0 bg-inherit/90 glass-effect border-t border-gray-500/5 flex justify-around items-center h-20 z-[100] px-4">
+            <button onclick="switchTab('home')" id="nav-home" class="nav-active flex flex-col items-center gap-1 flex-1">
                 <i class="fas fa-house-chimney text-xl"></i>
-                <span class="text-[9px] font-black">الرئيسية</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">الرئيسية</span>
             </button>
-            <button onclick="switchTab('trends')" id="nav-trends" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
-                <i class="fas fa-hashtag text-xl"></i>
-                <span class="text-[9px] font-black">الترند</span>
+            <button class="text-gray-400 flex flex-col items-center gap-1 flex-1 opacity-40">
+                <i class="fas fa-magnifying-glass text-xl"></i>
+                <span class="text-[9px] font-black uppercase tracking-widest">استكشاف</span>
             </button>
-            <button onclick="switchTab('live')" id="nav-live" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
-                <i class="fas fa-tower-broadcast text-xl"></i>
-                <span class="text-[9px] font-black">بث مباشر</span>
-            </button>
-            <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1.5 flex-1 transition-all">
-                <i class="fas fa-user-astronaut text-xl"></i>
-                <span class="text-[9px] font-black">ملفي</span>
+            <button onclick="switchTab('profile')" id="nav-profile" class="text-gray-400 flex flex-col items-center gap-1 flex-1">
+                <i class="fas fa-user-circle text-xl"></i>
+                <span class="text-[9px] font-black uppercase tracking-widest">الملف</span>
             </button>
         </nav>
     </div>
 
     <script>
+        // Supabase - DO NOT EDIT
         const SUPABASE_URL = 'https://cuaoopauabnmpmoddvby.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1YW9vcGF1YWJubXBtb2RkdmJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjgyNDUsImV4cCI6MjA5MzIwNDI0NX0._vyBPMk3oaJqMJaBRY4DaKj2ZjSodKPxZ77kFiZUH9o';
-        
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let userSession = null;
-        let allPosts = []; 
-        let currentViewingProfile = null;
+        let allPosts = [];
+        let currentTab = 'home';
+        let currentProfileTab = 'my-tweets';
 
         window.onload = () => initApp();
 
-        async function initApp() {
-            const localUser = localStorage.getItem('tuwaiq_user');
-            if (localUser) {
-                userSession = JSON.parse(localUser);
-                showMainApp();
+        function initApp() {
+            const stored = localStorage.getItem('tuwaiq_user');
+            if (stored) {
+                userSession = JSON.parse(stored);
+                showApp();
             } else {
                 document.getElementById('view-login').classList.remove('hidden');
             }
         }
 
-        async function handleLogin() {
-            const tempUser = {
-                id: 'user_' + Math.random().toString(36).substr(2, 9),
-                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
-                full_name: '',
-                username: '',
-                age: ''
+        function handleLogin() {
+            const id = Math.random().toString(36).substring(7);
+            userSession = {
+                id: 'usr_' + id,
+                full_name: 'بطل طويق',
+                username: 'tuwaiq_' + id.substring(0,3),
+                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${id}`,
+                bio: 'همة تعانق السماء، شغوف بالتكنولوجيا وبناء المستقبل 🇸🇦',
+                location: 'الرياض، السعودية',
+                birthday: ''
             };
-            userSession = tempUser;
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-setup').classList.remove('hidden');
+            localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
+            showApp();
         }
 
-        async function completeProfile() {
-            const name = document.getElementById('setup-name').value.trim();
-            const username = document.getElementById('setup-username').value.trim().toLowerCase();
-            const age = document.getElementById('setup-age').value;
+        function showApp() {
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            refreshUI();
+            loadPosts();
+        }
 
-            if (!name || !username || !age) return showToast("يرجى إكمال جميع الحقول");
-            if (!/^[a-z0-9_]+$/.test(username)) return showToast("اليوزر يجب أن يكون إنجليزي، حروف صغيرة وأرقام فقط");
+        function refreshUI() {
+            if(!userSession) return;
+            document.getElementById('user-avatar-mini').src = userSession.avatar_url;
+            document.getElementById('profile-avatar-large').src = userSession.avatar_url;
+            document.getElementById('profile-name').innerText = userSession.full_name;
+            document.getElementById('profile-handle').innerText = `@${userSession.username}`;
+            document.getElementById('profile-bio').innerText = userSession.bio || "لا توجد نبذة تعريفية..";
+            
+            // Location and Birthday
+            document.getElementById('display-location').innerHTML = `<i class="fas fa-map-marker-alt ml-2"></i>${userSession.location || 'غير محدد'}`;
+            document.getElementById('display-birthday').innerHTML = `<i class="fas fa-cake-candles ml-2"></i>${userSession.birthday ? formatDate(userSession.birthday) : 'غير محدد'}`;
+        }
 
-            // فحص التوافر في قاعدة البيانات
-            const { data, error } = await _supabase
-                .from('posts')
-                .select('username')
-                .eq('username', username)
-                .limit(1);
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ar-SA', { day: 'numeric', month: 'long' });
+        }
 
-            if (data && data.length > 0) {
-                return showToast("عذراً، هذا اليوزر محجوز مسبقاً ❌");
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('edit-avatar-preview').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openEditModal() {
+            document.getElementById('edit-avatar-preview').src = userSession.avatar_url;
+            document.getElementById('edit-name').value = userSession.full_name;
+            document.getElementById('edit-bio').value = userSession.bio || "";
+            document.getElementById('edit-location').value = userSession.location || "";
+            document.getElementById('edit-birthday').value = userSession.birthday || "";
+            document.getElementById('modal-edit-profile').classList.remove('hidden');
+            document.getElementById('settings-menu').classList.remove('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('modal-edit-profile').classList.add('hidden');
+        }
+
+        async function saveProfileChanges() {
+            const name = document.getElementById('edit-name').value.trim();
+            if (!name) {
+                showToast("الاسم إلزامي للمتابعة");
+                return;
             }
 
             userSession.full_name = name;
-            userSession.username = username;
-            userSession.age = age;
+            userSession.bio = document.getElementById('edit-bio').value.trim();
+            userSession.location = document.getElementById('edit-location').value.trim();
+            userSession.birthday = document.getElementById('edit-birthday').value;
+            userSession.avatar_url = document.getElementById('edit-avatar-preview').src;
 
             localStorage.setItem('tuwaiq_user', JSON.stringify(userSession));
-            showMainApp();
-            showToast("مرحباً بك في طويق! 🇸🇦");
-        }
-
-        function showMainApp() {
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-setup').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
             
-            document.getElementById('user-avatar-mini').src = userSession.avatar_url;
-            updateProfileView(userSession);
-            
-            loadPosts();
-            loadTrends();
-            loadLiveStreams();
+            refreshUI();
+            closeEditModal();
+            showToast("تم تحديث إعداداتك بنجاح ✅");
+            loadPosts(); 
         }
 
         async function loadPosts() {
@@ -343,46 +444,15 @@
 
             if (!error) {
                 allPosts = data;
-                renderPosts(data, 'main-feed');
+                renderFeed('main-feed', allPosts);
+                if (currentTab === 'profile') refreshProfileFeed();
+                updateStats();
             }
         }
 
-        function renderPosts(posts, containerId) {
-            const container = document.getElementById(containerId);
-            if (!posts || posts.length === 0) {
-                container.innerHTML = `<div class="p-20 text-center opacity-30 text-xs font-bold italic">لا توجد همم حالياً..</div>`;
-                return;
-            }
-
-            container.innerHTML = posts.map(post => `
-                <div class="p-5 hover:bg-gray-500/[0.02] transition-all border-b border-gray-500/5 group">
-                    <div class="flex gap-3 mb-4">
-                        <div class="relative">
-                            <img onclick="viewUserProfile('${post.username}')" src="${post.author_avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tuwaiq'}" class="w-11 h-11 rounded-2xl bg-gray-100 shadow-sm border border-gray-500/5 object-cover cursor-pointer hover:scale-105 transition">
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <h4 class="font-black text-sm cursor-pointer flex items-center gap-1.5" onclick="viewUserProfile('${post.username}')">
-                                    ${post.author_name}
-                                    <i class="fas fa-check-circle text-blue-500 text-[10px]"></i>
-                                </h4>
-                                <span class="text-[9px] opacity-40 font-bold">${formatTime(post.created_at)}</span>
-                            </div>
-                            <p class="text-[10px] text-[#006C48] font-bold">@${post.username || 'user'}</p>
-                        </div>
-                    </div>
-                    <p class="text-[15px] mb-4 leading-relaxed font-medium">${post.content}</p>
-                    <div class="flex gap-8 opacity-40 text-xs font-bold">
-                        <button onclick="handleLike('${post.id}')" class="flex items-center gap-2 hover:text-red-500 transition-colors group">
-                            <i class="far fa-heart group-active:scale-125 transition"></i><span>${post.likes || 0}</span>
-                        </button>
-                        <button onclick="handleRetweet('${post.id}')" class="flex items-center gap-2 hover:text-[#006C48] transition-colors">
-                            <i class="fas fa-retweet"></i><span>إعادة نشر</span>
-                        </button>
-                        <button onclick="showToast('سيتم إضافة التعليقات قريباً')" class="flex items-center gap-2 hover:text-[#006C48]"><i class="far fa-comment"></i><span>0</span></button>
-                    </div>
-                </div>
-            `).join('');
+        function updateStats() {
+            const myPostsCount = allPosts.filter(p => p.username === userSession.username).length;
+            document.getElementById('stats-posts-count').innerText = myPostsCount;
         }
 
         async function publishPost() {
@@ -400,106 +470,85 @@
 
             if (!error) {
                 input.value = "";
-                input.style.height = "auto";
+                input.style.height = "56px";
                 loadPosts();
-                showToast("تم نشر همّتك بنجاح 🇸🇦");
+                showToast("تم النشر ✨");
             }
         }
 
-        async function handleLike(postId) {
-            const post = allPosts.find(p => p.id === postId);
-            if (!post) return;
-
-            const { error } = await _supabase
-                .from('posts')
-                .update({ likes: (post.likes || 0) + 1 })
-                .eq('id', postId);
-
-            if (!error) {
-                loadPosts();
-                showToast("تم الإعجاب بالهمّة ❤️");
+        function renderFeed(containerId, posts) {
+            const container = document.getElementById(containerId);
+            if (!posts.length) {
+                container.innerHTML = `<div class="p-20 text-center opacity-20 font-black">لا توجد مشاركات</div>`;
+                return;
             }
-        }
 
-        async function handleRetweet(postId) {
-            const post = allPosts.find(p => p.id === postId);
-            if (!post) return;
-
-            const { error } = await _supabase.from('posts').insert([{
-                content: `إعادة نشر من @${post.username}: ${post.content}`,
-                author_name: userSession.full_name,
-                author_avatar: userSession.avatar_url,
-                username: userSession.username,
-                likes: 0
-            }]);
-
-            if (!error) {
-                loadPosts();
-                showToast("تمت إعادة النشر بنجاح 🔁");
-            }
-        }
-
-        function viewUserProfile(username) {
-            const post = allPosts.find(p => p.username === username);
-            const userToView = post ? {
-                full_name: post.author_name,
-                username: post.username,
-                avatar_url: post.author_avatar
-            } : null;
-
-            if (userToView) {
-                updateProfileView(userToView);
-                const userPosts = allPosts.filter(p => p.username === username);
-                renderPosts(userPosts, 'user-posts-feed');
-                
-                if (username !== userSession.username) {
-                    document.getElementById('back-to-feed').classList.remove('hidden');
-                    document.getElementById('logout-btn').classList.add('hidden');
-                } else {
-                    document.getElementById('back-to-feed').classList.add('hidden');
-                    document.getElementById('logout-btn').classList.remove('hidden');
-                }
-                
-                switchTab('profile');
-            }
-        }
-
-        function updateProfileView(user) {
-            document.getElementById('profile-avatar-large').src = user.avatar_url;
-            document.getElementById('profile-name').innerText = user.full_name;
-            document.getElementById('profile-handle').innerText = `@${user.username}`;
-            document.getElementById('count-followers').innerText = Math.floor(Math.random() * 2000) + 100;
-            document.getElementById('count-following').innerText = Math.floor(Math.random() * 1000) + 50;
-        }
-
-        function closeUserProfile() {
-            document.getElementById('back-to-feed').classList.add('hidden');
-            updateProfileView(userSession);
-            switchTab('home');
+            container.innerHTML = posts.map(post => `
+                <div class="p-5 post-card border-b border-gray-500/5">
+                    <div class="flex gap-4 mb-3">
+                        <img src="${post.author_avatar}" class="w-11 h-11 rounded-2xl object-cover shadow-sm">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-1.5">
+                                <h4 class="font-black text-sm">${post.author_name}</h4>
+                                <i class="fas fa-badge-check text-[#006C48] text-[10px]"></i>
+                                <span class="text-[10px] opacity-30 font-bold ml-auto">${new Date(post.created_at).toLocaleDateString('ar-SA')}</span>
+                            </div>
+                            <p class="text-[10px] text-[#006C48] font-black opacity-50">@${post.username}</p>
+                        </div>
+                    </div>
+                    <p class="text-[15px] leading-relaxed mb-4 font-medium opacity-90">${post.content}</p>
+                    <div class="flex gap-8 opacity-50">
+                        <button onclick="likePost('${post.id}')" class="flex items-center gap-2 hover:text-red-500"><i class="far fa-heart text-xs"></i><span class="text-xs font-black">${post.likes || 0}</span></button>
+                        <button class="flex items-center gap-2 hover:text-blue-500"><i class="far fa-comment text-xs"></i><span class="text-xs font-black">0</span></button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function switchTab(tab) {
+            currentTab = tab;
             document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
             document.getElementById(`view-${tab}`).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active'));
-            const targetNav = document.getElementById(`nav-${tab}`);
-            if (targetNav) targetNav.classList.add('nav-active');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-[#006C48]'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.add('text-gray-400', 'opacity-40'));
             
-            if (tab === 'profile' && document.getElementById('back-to-feed').classList.contains('hidden')) {
-                viewUserProfile(userSession.username);
-            }
-            document.querySelector('main').scrollTop = 0;
+            const btn = document.getElementById(`nav-${tab}`);
+            btn.classList.add('nav-active');
+            btn.classList.remove('text-gray-400', 'opacity-40');
+            
+            if (tab === 'profile') refreshProfileFeed();
+            document.getElementById('settings-menu').classList.remove('show');
+            document.querySelector('main').scrollTo(0,0);
         }
 
-        function handleSearch(query) {
-            const q = query.toLowerCase().trim();
-            if (!q) { renderPosts(allPosts, 'main-feed'); return; }
-            const filtered = allPosts.filter(post => 
-                (post.content && post.content.toLowerCase().includes(q)) || 
-                (post.author_name && post.author_name.toLowerCase().includes(q)) ||
-                (post.username && post.username.toLowerCase().includes(q))
-            );
-            renderPosts(filtered, 'main-feed');
+        function setProfileTab(tabId) {
+            currentProfileTab = tabId;
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.classList.remove('profile-tab-active');
+                btn.classList.add('opacity-30');
+            });
+            const el = document.getElementById(`tab-${tabId}`);
+            el.classList.add('profile-tab-active');
+            el.classList.remove('opacity-30');
+            refreshProfileFeed();
+        }
+
+        function refreshProfileFeed() {
+            if (currentProfileTab === 'my-tweets') {
+                const filtered = allPosts.filter(p => p.username === userSession.username);
+                renderFeed('user-posts-feed', filtered);
+            } else {
+                document.getElementById('user-posts-feed').innerHTML = `<div class="p-20 text-center opacity-30 font-black">قريباً</div>`;
+            }
+        }
+
+        function toggleSettings() {
+            document.getElementById('settings-menu').classList.toggle('show');
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('tuwaiq_user');
+            window.location.reload();
         }
 
         function toggleDarkMode() {
@@ -510,83 +559,16 @@
 
         function showToast(msg) {
             const t = document.createElement('div');
-            t.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-[#006C48] text-white px-6 py-3 rounded-2xl text-sm font-black shadow-2xl z-[2000] animate-bounce";
-            t.innerText = msg;
+            t.className = "fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-[12px] font-black shadow-2xl z-[2000] flex items-center gap-3";
+            t.innerHTML = `<i class="fas fa-check-circle text-[#006C48]"></i> ${msg}`;
             document.body.appendChild(t);
-            setTimeout(() => {
-                t.style.opacity = '0';
-                t.style.transition = 'opacity 0.5s';
-                setTimeout(() => t.remove(), 500);
-            }, 2500);
+            setTimeout(() => t.remove(), 2500);
         }
 
-        function formatTime(dateStr) {
-            const diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
-            if (diff < 60) return "الآن";
-            if (diff < 3600) return `${Math.floor(diff/60)}د`;
-            if (diff < 86400) return `${Math.floor(diff/3600)}س`;
-            return "يوم";
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('tuwaiq_user');
-            window.location.reload();
-        }
-
-        function uploadStory(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const storyList = document.getElementById('stories-list');
-                    const div = document.createElement('div');
-                    div.className = "flex flex-col items-center gap-1 min-w-[70px] animate-fade-in";
-                    div.innerHTML = `
-                        <div class="w-16 h-16 rounded-2xl border-2 border-[#D4AF37] p-0.5 shadow-sm transform hover:scale-105 transition">
-                            <img src="${e.target.result}" class="w-full h-full rounded-2xl object-cover">
-                        </div>
-                        <span class="text-[9px] font-bold opacity-60">الآن</span>
-                    `;
-                    storyList.prepend(div);
-                    showToast("تم رفع قصتك بنجاح ✨");
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function loadTrends() {
-            const trends = [
-                { id: 1, tag: "#رؤية_السعودية_2030", count: "1.2M", category: "سياسة" },
-                { id: 2, tag: "#طويق_التقني", count: "850K", category: "تقنية" },
-                { id: 3, tag: "#نيوم", count: "500K", category: "مشاريع" },
-                { id: 5, tag: "#يوم_التأسيس", count: "2.5M", category: "وطني" }
-            ];
-            document.getElementById('trends-container').innerHTML = trends.map(t => `
-                <div class="p-4 bg-gray-500/[0.03] rounded-2xl border-r-4 border-[#006C48] hover:bg-gray-500/[0.06] transition cursor-pointer">
-                    <span class="text-[10px] text-[#006C48] font-black uppercase tracking-wider">${t.category}</span>
-                    <h3 class="text-lg font-black mt-1">${t.tag}</h3>
-                    <p class="text-[10px] opacity-40 font-bold">${t.count} تغريدة</p>
-                </div>
-            `).join('');
-        }
-
-        function loadLiveStreams() {
-            const streams = [
-                { id: 1, title: "دورة الذكاء الاصطناعي", user: "م. سارة", viewers: "2.4K", img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4" },
-                { id: 2, title: "الرياض في الليل 🌃", user: "سعود", viewers: "1.1K", img: "https://images.unsplash.com/photo-1548013146-72479768b921" }
-            ];
-            document.getElementById('live-container').innerHTML = streams.map(s => `
-                <div class="relative h-48 rounded-3xl overflow-hidden shadow-lg group cursor-pointer">
-                    <img src="${s.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                    <div class="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xl">
-                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> مباشر
-                    </div>
-                    <div class="absolute bottom-3 right-3 left-3">
-                        <h4 class="text-white font-black text-sm">${s.title}</h4>
-                        <p class="text-white/60 text-[10px]">${s.user} • ${s.viewers} مشاهد</p>
-                    </div>
-                </div>
-            `).join('');
+        async function likePost(id) {
+            const post = allPosts.find(p => p.id === id);
+            await _supabase.from('posts').update({ likes: (post.likes || 0) + 1 }).eq('id', id);
+            loadPosts();
         }
     </script>
 </body>
